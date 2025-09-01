@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Pixel Art</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #canvas-container {
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #character-display {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            border: 1px solid #444;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            margin: 0;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background: #666;
+        }
+
+        pre {
+            background: #333;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            max-width: 600px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .character-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .pixel-guide {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .pixel-example {
+            display: flex;
+            align-items: center;
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualizador de Pixel Art</h1>
+    
+    <div id="canvas-container">
+        <h2>Personagem Bob</h2>
+        <div id="character-display"></div>
+        <div class="controls">
+            <button id="zoomIn">Aumentar</button>
+            <button id="zoomOut">Diminuir</button>
+            <button id="exportCode">Exportar Código</button>
+        </div>
+    </div>
+
+    <div class="character-info">
+        <h3>Guia de Cores</h3>
+        <div class="pixel-guide" id="pixel-guide">
+            <!-- Será preenchido pelo JavaScript -->
+        </div>
+    </div>
+
+    <div id="code-display" style="display: none;">
+        <h3>Código JavaScript do Personagem</h3>
+        <pre id="character-code"></pre>
+    </div>
+
+    <script>
+        // Personagem Bob
+        const bob = [
+            '...BBBB...',  // 0 - Cabelo
+            '..BBBBBB..',  // 1
+            '.SSSSSSSS.',  // 2 - Rosto
+            '.SEESEESS.',  // 3 - Olhos
+            '.SSSSSSSS.',  // 4
+            '.SSSSSSSS.',  // 5
+            '..SSSSSS..',  // 6 - Pescoço
+            '.AAAAAAAA.',  // 7 - Camisa
+            'AAAAAAAAAA',  // 8
+            '.AAAAAAAA.',  // 9
+            '..AAAAAA..',  // 10
+            '..PPPPPP..',  // 11 - Calças
+            '..PPPPPP..',  // 12
+            '..PP..PP..',  // 13 - Pernas
+            '..PP..PP..',  // 14
+            '..MM..MM..'   // 15 - Sapatos
+        ];
+
+        // Mapeamento de cores
+        const colorMap = {
+            '.': 'transparent',    // Transparente
+            'B': '#8B4513',        // Cabelo marrom
+            'S': '#F4C2A1',        // Pele
+            'E': '#000000',        // Olhos
+            'A': '#4169E1',        // Camisa azul
+            'P': '#2F4F4F',        // Calças cinza escuro
+            'M': '#654321'         // Sapatos marrons
+        };
+
+        // Descrições de cores
+        const colorDescriptions = {
+            '.': 'Transparente',
+            'B': 'Cabelo',
+            'S': 'Pele',
+            'E': 'Olhos',
+            'A': 'Camisa',
+            'P': 'Calças',
+            'M': 'Sapatos'
+        };
+
+        // Função para renderizar o personagem
+        function renderCharacter(character, pixelSize = 10, targetElement) {
+            // Criar um elemento canvas
+            const canvas = document.createElement('canvas');
+            const width = character[0].length * pixelSize;
+            const height = character.length * pixelSize;
+            
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.imageRendering = 'pixelated';
+            canvas.id = 'character-canvas';
+            canvas.style.transform = `scale(${currentScale})`;
+            canvas.style.transformOrigin = 'top left';
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+            
+            // Desenhar cada pixel
+            for (let y = 0; y < character.length; y++) {
+                const row = character[y];
+                for (let x = 0; x < row.length; x++) {
+                    const colorKey = row[x];
+                    if (colorKey !== '.') {  // Não desenhar pixels transparentes
+                        ctx.fillStyle = colorMap[colorKey] || '#FF00FF'; // Magenta para códigos desconhecidos
+                        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+            
+            // Limpar o container e anexar o novo canvas
+            targetElement.innerHTML = '';
+            targetElement.appendChild(canvas);
+            
+            return canvas;
+        }
+
+        // Função para exportar o personagem como código
+        function exportCharacterCode(character) {
+            let code = '// Personagem em Pixel Art\n';
+            code += 'const character = [\n';
+            character.forEach(row => {
+                code += `    '${row}',\n`;
+            });
+            code += '];\n\n';
+            
+            // Adicionar o código de cores
+            code += '// Mapeamento de cores\n';
+            code += 'const colorMap = {\n';
+            for (const [key, value] of Object.entries(colorMap)) {
+                code += `    '${key}': '${value}', // ${colorDescriptions[key] || 'Cor personalizada'}\n`;
+            }
+            code += '};\n';
+            
+            return code;
+        }
+
+        // Criar guia de cores
+        function createColorGuide() {
+            const guideContainer = document.getElementById('pixel-guide');
+            guideContainer.innerHTML = '';
+            
+            for (const [key, value] of Object.entries(colorMap)) {
+                if (key === '.') continue; // Pular transparente
+                
+                const pixelExample = document.createElement('div');
+                pixelExample.className = 'pixel-example';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = value;
+                
+                const colorLabel = document.createElement('span');
+                colorLabel.textContent = `'${key}' = ${colorDescriptions[key]}`;
+                
+                pixelExample.appendChild(colorBox);
+                pixelExample.appendChild(colorLabel);
+                guideContainer.appendChild(pixelExample);
+            }
+        }
+
+        // Variáveis globais para controle do visualizador
+        let currentScale = 5;
+        let pixelSize = 10;
+
+        // Inicializar o visualizador
+        document.addEventListener('DOMContentLoaded', () => {
+            const displayContainer = document.getElementById('character-display');
+            
+            // Renderizar o personagem
+            renderCharacter(bob, pixelSize, displayContainer);
+            
+            // Criar guia de cores
+            createColorGuide();
+            
+            // Manipulador de zoom
+            document.getElementById('zoomIn').addEventListener('click', () => {
+                currentScale = Math.min(currentScale + 1, 10);
+                const canvas = document.getElementById('character-canvas');
+                if (canvas) {
+                    canvas.style.transform = `scale(${currentScale})`;
+                }
+            });
+            
+            document.getElementById('zoomOut').addEventListener('click', () => {
+                currentScale = Math.max(currentScale - 1, 2);
+                const canvas = document.getElementById('character-canvas');
+                if (canvas) {
+                    canvas.style.transform = `scale(${currentScale})`;
+                }
+            });
+            
+            // Manipulador de exportação de código
+            document.getElementById('exportCode').addEventListener('click', () => {
+                const codeDisplay = document.getElementById('code-display');
+                const charCode = document.getElementById('character-code');
+                
+                charCode.textContent = exportCharacterCode(bob);
+                codeDisplay.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

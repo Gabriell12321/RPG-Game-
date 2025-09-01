@@ -1,34 +1,40 @@
-/* Estilos para o jogo RPG */
-@font-face {
-  font-family: 'VCR-OSD-MONO';
-  src: url('https://cdn.jsdelivr.net/gh/tpkn/vercrosd-font/VCR_OSD_MONO_1.001.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+/* Estilos para o jogo RPG de Terror */
+/* Usando apenas fontes do sistema para compatibilidade total */
 
 html, body {
   height: 100%;
   margin: 0;
-  background: #050a10;
+  background: #080404;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: 'VCR-OSD-MONO', monospace;
+  font-family: 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
   overflow: hidden;
-  color: #c8e2f0;
+  color: #bfb0b0;
+  background-image: radial-gradient(circle, #190808 0%, #050202 100%);
 }
 
 /* Canvas principal */
 #screen {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border: 12px solid #071218;
+  border: 12px solid #100606;
   border-radius: 2px;
-  box-shadow: 0 0 30px rgba(0,128,128,0.15), inset 0 0 8px rgba(0,0,0,0.4);
+  box-shadow: 0 0 30px rgba(80,0,0,0.25), inset 0 0 8px rgba(20,0,0,0.6);
   background: #000;
   display: block;
   position: relative;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 30px rgba(80, 0, 0, 0.25), inset 0 0 8px rgba(20, 0, 0, 0.6);
+  }
+  to {
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 12px rgba(255, 0, 0, 0.8);
+  }
 }
 
 /* Container principal */
@@ -42,6 +48,11 @@ html, body {
   padding: 20px;
   box-sizing: border-box;
   position: relative;
+  margin-top: 20px;
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Controles do áudio */
@@ -191,4 +202,27 @@ body {
 /* Quando o jogo está rodando */
 .game-running .menu-only {
   display: none;
+}
+
+/* Partículas de fundo */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.3)" /></svg>') repeat;
+  z-index: 1;
+  pointer-events: none;
+  animation: moveParticles 10s linear infinite;
+}
+
+@keyframes moveParticles {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100px 100px;
+  }
 }

@@ -3,14 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Jogo RPG - Tela Inicial (Web)</title>
+  <title>Pesadelo Pixelado - RPG de Terror</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .game-title {
+      font-size: 2.5rem;
+      color: #ff4444;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.6);
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- Adicionando um título decorativo -->
+  <div class="game-title">Pesadelo Pixelado</div>
+  
   <div class="container" id="gameContainer">
     <div class="scanline"></div>
     <canvas id="screen"></canvas>
-    <div class="info-bar">Teclado: ↑ ↓ Enter • F11: Tela Cheia • Mouse: clique nas opções • Beta v0.1</div>
+    <div class="info-bar">Controles: WASD = mover • ESPAÇO = atacar • E = mudar ambiente • ESC = menu • F11 = tela cheia</div>
     <div class="audio-controls">
       <button class="audio-btn" id="musicToggle">🔊 Música</button>
       <button class="audio-btn" id="sfxToggle">🔊 Sons</button>
@@ -18,24 +39,93 @@
     </div>
   </div>
   
-  <!-- Áudio -->
-  <audio id="bgMusic" loop preload="auto">
-    <source src="https://opengameart.org/sites/default/files/Heroic%20Demise%20%28New%29_0.mp3" type="audio/mpeg">
+  <!-- Áudio (opcional - funcionará mesmo se não carregar) -->
+  <audio id="bgMusic" loop preload="none" style="display: none;">
+    <!-- Sem sources para evitar erros de carregamento -->
   </audio>
-  <audio id="menuMove" preload="auto">
-    <source src="https://opengameart.org/sites/default/files/menu_click4.wav" type="audio/wav">
+  <audio id="menuMove" preload="none" style="display: none;">
+    <!-- Áudio sintético será usado -->
   </audio>
-  <audio id="menuSelect" preload="auto">
-    <source src="https://opengameart.org/sites/default/files/click_select_stereo.ogg" type="audio/ogg">
+  <audio id="menuSelect" preload="none" style="display: none;">
+    <!-- Áudio sintético será usado -->
+  </audio>
+  <audio id="doorSound" preload="none" style="display: none;">
+    <!-- Som de porta abrindo -->
+  </audio>
+  <audio id="rainSound" loop preload="none" style="display: none;">
+    <!-- Som visual da chuva apenas -->
   </audio>
   
   <!-- Informações sobre o jogo -->
   <div class="credits menu-only">
-    <p>Um jogo de RPG 2D pixel estilo Zelda. Explore masmorras, encontre itens raros, 
-      derrote monstros e salve o reino!</p>
-    <p>Um projeto em desenvolvimento - 2025</p>
+    <p>Um RPG de terror psicológico. Explore uma cidade abandonada, descubra segredos sombrios, 
+      fuja de entidades sobrenaturais e lute por sua sanidade.</p>
+    <p>A escuridão te observa - 2025</p>
   </div>
   
-  <script src="game.js"></script>
+  <!-- Scripts do jogo -->
+  <script>
+    // Robust client-side diagnostics: script/resource errors + Promise rejections
+    (function(){
+      function appendOverlay(html){
+        try {
+          const el = document.createElement('div');
+          el.style.cssText = 'color:red; background:black; padding:12px; margin:12px; font-family:monospace; white-space:pre-wrap; z-index:9999';
+          el.innerHTML = html;
+          document.body.appendChild(el);
+        } catch (e) { console.error('Failed to append overlay', e); }
+      }
+
+      // JS runtime errors
+      window.addEventListener('error', function(event) {
+        // Resource loading errors (script/img/css) often have no event.error
+        if (event.target && event.target !== window && event.target.tagName) {
+          const tag = event.target.tagName.toLowerCase();
+          const src = event.target.src || event.target.href || '(inline)';
+          const msg = `Resource load error: <${tag}> ${src}`;
+          console.error(msg, event);
+          appendOverlay(`Error: ${msg}`);
+          return;
+        }
+        const msg = (event.error && event.error.message) || event.message || 'Unknown error';
+        const file = event.filename || window.__lastLoadingScript || 'unknown file';
+        const line = event.lineno || 0;
+        const col = event.colno || 0;
+        const stack = (event.error && event.error.stack) ? ('\n' + event.error.stack) : '';
+        console.error('Error caught:', msg, 'at', file, line, col, stack);
+        appendOverlay(`Error: ${msg}\nFile: ${file}\nLine: ${line}, Column: ${col}${stack ? ('\n' + stack) : ''}`);
+      }, true);
+
+      // Unhandled Promise rejections
+      window.addEventListener('unhandledrejection', function(event){
+        const reason = event.reason || {};
+        const msg = reason.message || String(reason) || 'Unhandled rejection';
+        const stack = reason.stack ? ('\n' + reason.stack) : '';
+        const src = window.__lastLoadingScript || 'unknown file';
+        console.error('Unhandled rejection:', msg, stack);
+        appendOverlay(`Unhandled Promise rejection: ${msg}\nSource: ${src}${stack ? ('\n' + stack) : ''}`);
+      });
+    })();
+  </script>
+  <!-- Scripts do jogo -->
+  <script src="cutscene.js"></script>
+  <script src="game_simple_new.js"></script>
+  <script>
+    // Integrar a cutscene com o jogo
+    window.startGame = function() {
+      // Função chamada pela cutscene quando terminar
+      console.log('Cutscene finalizada, iniciando jogo...');
+    };
+    
+    // Iniciar cutscene automaticamente
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        // Auto-iniciar a cutscene após um breve delay
+        if (window.CutsceneSystem && window.CutsceneSystem.start) {
+          window.CutsceneSystem.start();
+        }
+      }, 1000);
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cutscene - Início</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .scene {
+            background: #111;
+            border-radius: 12px;
+            box-shadow: 0 0 40px #500;
+            padding: 40px 32px;
+            min-width: 340px;
+            max-width: 90vw;
+            text-align: center;
+            position: relative;
+            animation: pulse 4s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 40px #500; }
+            50% { box-shadow: 0 0 60px #800; }
+        }
+        .character {
+            margin: 0 auto 24px auto;
+            width: 80px;
+            height: 120px;
+            position: relative;
+        }
+        .head {
+            width: 40px;
+            height: 40px;
+            background: #F4C2A1;
+            border-radius: 8px;
+            position: absolute;
+            left: 20px;
+            top: 0;
+        }
+        .hair {
+            width: 40px;
+            height: 16px;
+            background: #8B4513;
+            border-radius: 8px 8px 0 0;
+            position: absolute;
+            left: 20px;
+            top: -8px;
+        }
+        .eye {
+            width: 6px;
+            height: 6px;
+            background: #222;
+            border-radius: 50%;
+            position: absolute;
+            top: 18px;
+        }
+        .eye.left { left: 30px; }
+        .eye.right { left: 44px; }
+        .tear {
+            width: 4px;
+            height: 12px;
+            background: #6ec6ff;
+            border-radius: 2px;
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            opacity: 0;
+            animation: tear 2s linear forwards;
+        }
+        .tear.right { left: 46px; animation-delay: 0.5s; }
+        @keyframes tear {
+            0% { opacity: 0; top: 24px; }
+            20% { opacity: 1; }
+            100% { opacity: 1; top: 36px; }
+        }
+        .body {
+            width: 32px;
+            height: 40px;
+            background: #4169E1;
+            position: absolute;
+            left: 24px;
+            top: 40px;
+            border-radius: 6px;
+        }
+        .text {
+            font-size: 1.2em;
+            margin-bottom: 16px;
+            min-height: 48px;
+            text-shadow: 0 0 8px #f00;
+            animation: flicker 5s infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { text-shadow: 0 0 8px #f00; }
+            25% { text-shadow: 0 0 12px #f00; }
+            26% { text-shadow: none; }
+            27% { text-shadow: 0 0 12px #f00; }
+            75% { text-shadow: 0 0 8px #f00; }
+            76% { text-shadow: none; }
+            77% { text-shadow: 0 0 8px #f00; }
+        }
+        
+        .btn {
+            background: #600;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #900;
+            transform: scale(1.05);
+        }
+        
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 200px #000;
+            pointer-events: none;
+        }
+        
+        .jumpscare {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M40,20 C20,20 10,40 10,50 C10,60 20,80 40,80 L60,80 C80,80 90,60 90,50 C90,40 80,20 60,20 L40,20 Z M30,40 Q40,35 40,50 Q30,65 30,40 Z M70,40 Q60,35 60,50 Q70,65 70,40 Z M30,70 Q50,80 70,70 Z" fill="none" stroke="red" stroke-width="2"/></svg>') center no-repeat;
+            background-size: 0;
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .warning {
+            color: #f00;
+            font-weight: bold;
+            animation: warningPulse 2s infinite;
+        }
+        
+        @keyframes warningPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="vignette"></div>
+    <div class="jumpscare" id="jumpscare"></div>
+    <div class="scene">
+        <div class="character">
+            <div class="hair"></div>
+            <div class="head"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="tear"></div>
+            <div class="tear right"></div>
+            <div class="body"></div>
+        </div>
+        <div class="text" id="cutsceneText"></div>
+        <button class="btn" id="nextBtn">Continuar</button>
+    </div>
+    <script>
+        // Sons de terror
+        const ambientSound = new Audio();
+        ambientSound.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAgAACesB9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/jIMAAJI1IWRmamAAL5RwfyaUyhpRBOMMLrIIUTm8ADQdBw4thgP4Dnvh8P1gP37q4HwfLg4H7+cH37h4Ph//xMiD////+L/+SKiprGCWFOMdGNvmYWGBJoWGMJig+YIJGEYQaFhX/OLhtOFBAWYSE3mMP6ai43GCJRU5viJ1/i4DH//9bFBKV9XzkjDXkiHJrCIjLW0s+Eg7aCmzJpQhCk7y1JFLs+OipBbLO2FkFLHiCaIRmwUQ0xuSpOaxUBcBThYbxcA2mtCdQWHXHdSFoaV2jMYqtSpu/ql0mIEBQccLplKdl1cpgVXR7m1S1fMMcYDOzp96JgYfM0LW01jWsuy2IxGWhdupKt2/6KFcbTquodlTKzLcXr0SuzvxPbj7ez/znUZ37kUPhvbnov8ZrURv5Zhbq5yxfnzUuJdw37l7W/u7HnX8tmr1blzc4///4RLwoggsEB0QIF///8BEyQH1VZXUBV1q1ZVZXJ////pVC3rKtwkJBAb//pQZMJhDUMTVwTauQkiMXXHFAMu2ViEFwXIbPGixCL5d1OhkLdIEByGSq0WDONCq2WyaQO9uxLsS0G1UiukgCQJcZsNrZbEwZHRYSewOYyS5QP/4+DAAAAASn9IB/jDUxmwwEaFBbxgeK9Acxirxg8FKho5lFeAwbBRHMEAMwWDBEPMPgMweCzBgJMIgkmIYJCphgCDQMYGA42AKBAZ4BQNGGgIzI4WAwTMRIMPBUSKAZ0QBCskxUMAFFBVTTYt6GQ0RQTJBKMg0mlXwYWgYhUqbAcX7AwoFC2xGRj1KJiTyN3v/7h+JrILlJbHfXQm0fQ4HmVl3ZYlqiNArW0rV5b1RfO7fexl0jy/n97dXQRPYWGqVONrVdXwjeV9b//+Xi4wMErSZ5E7/////5ysJB1TiRESXQ///8KOCLNhJKsgpUNsXIdzlFJKn///qyxclF6jjiUUQOF//9iiiTeKKEprqSRQikrDHtpPFjLSuKF/vFoMAhKMAAAB//jUMAAAANcIRfMewAIcAP/kQAAAAGJSUpAAZWFBAGTSrGJ6JmMYomiytGNwBgQBJgEgIwYwoOkwEghGIUhYAAAAAQP/ymQZDI6oD0RnI6rSIi3Lb5e5sGCCuL96oYIJLgsZkzf5YLBJe48lxEptZNoX2LxZghsZMWr0OtIFiEw0kYqYOoqTtDBDHscilSpUscMFhFcuwpSpUqVKnjKvuEKlSgf//83/yvqHYxYJBJY4VKh8n5hChQoUcWL74YEIQhB4BCEIQfBCNltgQhCEI+NDZBCEPT3ggxbYEIQhY2O72hCEIQhCB///+ECEIWY9sa5CEIQhYoLgnaqKCZHSw3KGSJgsn0QAAAAAAAEAAWhbQPVQ+BkehI5H4CvfoeJcpJehIklwAgbgcDgHGDwCDgAfDAk0BoGAEBoFgBOJIKBCGYbgfBGF4JAgIAg0C/RhIHQGGpGAqAELQXCUEoeASA4IpzB8i0SIhDMF0OABBEEADQIBYC6YYHg0DoNgqCIJguGYNBDhgDgXhAMEnFUadHEGdINBtCsLRkHiQBsGgQwqCESB+HgwR4MkfCwFgkDuZRdl0XRlGmdhMJg2ngPZgDGLgnkEQg8WkF4GCYR5JGCayJJiKTDJRRkwg0YZTGscp8n+Yhml+SAyh8KsMwfCYJtKByZYyMk3EEYI6nuVZNHsC0TC8RJUkQGEIC8RhiCkHIdi0FosRoMUXj7JYpzGEYM4kCJHwShgHARA2DGhkqicIwlCyCI3lOVBtl2WZbH4fyLL08koYwhBGGkORWKk/DJHQTRAHKLw3GAJwgB6HcMkLCgSYf0CSJJj6TYgBtDwcxdiIHIcyFJUlCgLk6THTw8x6OgmEoUJDq+uZoP/42DAAACQYGAgECgxCkxBAMFAzlCwJAwrAIEBhQBJgSAJhMDAQDTAoATAcBTCgDjEIcygzMGAQMBQCMA" + 
+        "wIAQG0BwwFAQQBmAQAGAgBmAYAmAgCgMJhg8FBgEJBh0MRiKGxgEAZg0DQEAMwHAAwMAwSC5jcT5jcAZigEJggB5gQAJgCBJgCCZgUEQMA8wQA0wOAIwGAUwOAoFB8wNAcYE5hQGJgKCwMAsBABIQApYUNKVMCACIBhopAxUDFQHAwEQAPAfLHSA08MIA3AAsLKBFQL4qXM0QBAMwjMITAgBF5Wol7GCQBOGjgqEB6EYCgBMAQAMAgAMAgLMBQCMAgCMAQEMAQCMAQCMAQIBwXMNgoMBQdMCwWMAARMAACMAgAMBAFMAQB8FTBEDEQKAACzAGBDAgPjAcAAQHp0AUG4jG2TAAAzAUBTAgCzAUCjAUDjAIASYFDAMCQCMAQAMAgCMAgCAgNmAgDGAoCmA4BGAYAABF4kGKVmBQCmAYCmAYDGAQDmAYEGAgFmBgRmBIJmBAOGA4JmA4JmAoCmAAEBwEAgFCATI2o0wzQoDAwFCgKmAQCmAoCmAIDmAgDmAgFAQFjAwMDAIASQLJEMQTmAgFhYTDAACzBAERBZzEUwFAIEAGYAgEYBFGYBgAYCAEYAgUYAgAJhsYBgcYAgAYBgOYAgEYAgCFiRABAMBgMMAQCMAACMAQDMAgCAwXGAwHGAwGmBAHmBAImAoImA4CGAoIgIDmAgJGB4SGBAKAIJGM5vGIYDmAADGAYGGAYDmAYBGAYAmAgBJ1DAUQjoHApMAQPMAwMMAQGMAARMAQCMAgJCgOMBQKMBQGMAQGAgYw5UMOQAAAMAQEMBQEMAQIMAQIMAQRMAQKMAQIMAQGMBgRMBgXMAQEMAQGMAQIGD0wGAMwDBYvADw0wLAY" +
+        "wDBowCAUwFAEcExhWGhgMBJgGAJgGAxgEAAPSswYBUCgoGFgYNiAChQtS4i0SgcDAcNaEz4lh4wJB1gmFp4XIDAEUA0y2WjARQeCCCADzAEKa0VmAQChMvGIgAqVjAIBzGUVLBUMHwMZGEhRgEJJYNDYcJnBlAYz0GDARBApHCxQMDh8ACDgoUoMoqNDNRKMAQJoACCJbGGQFmBABgMMreCgybOTm5ipQwpEBtXSsdTcwDJ0CDAHMCQuCIIbpi9EqGCYQJAEYDEEYJGOYBjoFJjILlMXjDACQAAtxYAaC4EBkwMDQwKCMwFBQwDAAEBQYAgICCwwCAAwCAcwFCIwXLswa" + 
+        "AkwXAUwEA0GDwDDGLA4WBgWEAgBMAwGMAgCMAQSMAQWMAQVMAwLMA" + 
+        "AEMAQDMAwAMAgAMAgGMAwHMAgIMAgGDgRQEFIwEBEwFBU6MUQeMAQFMAQGMAwBMAAAeEJgUBpgIAoEBwwDBIwDA4GBIBkDBAFAUZgMYBgMYCgqYDgUYEgsBgMCAQYvDEDCuYCA4YCCCBCsYEAKBgNCw3MBQCMAwiTucOkwnBdAUhEiCMwFBAwMAYwMA0BJMCzIc4FAsxADQwJBQJDBYBGg3aiXENn4wBDcvOgdDQEBgGMLzFgHJgksUpiIXYwPBIxWQzWMKQYYZCiSkUNRgL" + 
+        "YSAwDA8wCAgKDAYAgIAzAcADAICTAACzBAJzCEDzAUBzAUCQMPTAUCjAMAGBRgmAJgWaJgcYNgMYFGqYCGCYBmqYFmMAwGBQIGZSyHGQrEE0wTEgYDmAYHGBACmAwBGCBgHAwkTBU" +
+        "wDBYBBaYEgCQjCgkVRgIBYqCIYCgMYCgOBgoMJlEWx" + 
+        "UYJgGYAA4YDAgZVDMCgxGE5h6JBjCAxg2AKTnNoMGQDRgwLAEYFgqYlDYYBgQlZgqBphiJhgmBJgOBxgGCJguBZg0ByBmDAJGAYJmDQY";
+        
+        // Iniciar áudio ambiente
+        ambientSound.loop = true;
+        ambientSound.volume = 0.3;
+        
+        // Frases de início mais assustadoras
+        const texts = [
+            '<span class="warning">AVISO: Este jogo contém cenas perturbadoras.</span>',
+            'Uma noite escura... o silêncio é quebrado por um grito abafado.',
+            'Um jovem acorda encharcado de suor, lágrimas escorrem pelo seu rosto.',
+            'As sombras parecem se mover ao seu redor...',
+            'Ele sente uma presença no quarto. Algo o observa.',
+            'Vozes sussurram em sua mente: "Não há escapatória..."',
+            'O que era pesadelo... agora se torna realidade.'
+        ];
+        
+        let idx = 0;
+        const textEl = document.getElementById('cutsceneText');
+        const btn = document.getElementById('nextBtn');
+        const jumpscare = document.getElementById('jumpscare');
+        
+        function typeWriter(text, i = 0) {
+            if (i === 0) {
+                textEl.innerHTML = '';
+            }
+            
+            if (i < text.length) {
+                textEl.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(() => typeWriter(text, i), 30);
+            }
+        }
+        
+        function showJumpscare() {
+            jumpscare.style.opacity = '0.7';
+            jumpscare.style.backgroundSize = '100% 100%';
+            
+            setTimeout(() => {
+                jumpscare.style.opacity = '0';
+                jumpscare.style.backgroundSize = '0';
+            }, 150);
+        }
+        
+        function showText() {
+            // Efeito de texto digitando
+            typeWriter(texts[idx]);
+            
+            // Configurar botão
+            if (idx === texts.length - 1) {
+                btn.textContent = 'Iniciar Jogo';
+            } else {
+                btn.textContent = 'Continuar';
+            }
+            
+            // Jumpscare aleatório em alguns momentos
+            if (idx === 3 || idx === 5) {
+                setTimeout(showJumpscare, Math.random() * 3000 + 1000);
+            }
+        }
+        
+        btn.onclick = function() {
+            // Iniciar áudio no primeiro clique (navegadores bloqueiam autoplay)
+            if (idx === 0) {
+                ambientSound.play();
+            }
+            
+            if (idx < texts.length - 1) {
+                idx++;
+                showText();
+            } else {
+                window.location.href = 'index.html'; // Troque para o arquivo do seu jogo
+            }
+        };
+        
+        showText();
+    </script>
+</body>
+</html>

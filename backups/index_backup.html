@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jogo RPG - Tela Inicial (Versão Anterior)</title>
+  <style>
+    html,body{height:100%;margin:0;background:#071018;display:flex;align-items:center;justify-content:center;font-family:monospace}
+    /* keep the canvas crisp when scaled */
+    #screen{image-rendering:pixelated;image-rendering:crisp-edges;border:10px solid #071218;background:#000;display:block}
+    .container{display:flex;flex-direction:column;gap:10px;align-items:center}
+    small{color:#7ea;letter-spacing:0.06em}
+    /* center and allow the canvas to scale responsively while preserving pixelated look */
+    .container{width:100%;max-width:1100px;padding:20px;box-sizing:border-box}
+    body{background:linear-gradient(180deg,#031019 0%, #071018 60%)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="screen"></canvas>
+    <small>Teclado: ↑ ↓ Enter • Mouse: clique nas opções</small>
+  </div>
+  <script src="game_backup.js"></script>
+</body>
+</html>

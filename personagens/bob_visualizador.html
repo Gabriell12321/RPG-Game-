@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob - Pixel Character</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: monospace;
+        }
+
+        .character-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Bob - Personagem Pixelado 2D */
+        .bob {
+            width: 64px;
+            height: 96px;
+            position: relative;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            transform: scale(3);
+        }
+
+        /* Pixel Grid - Cabeça */
+        .head {
+            position: absolute;
+            top: 0;
+            left: 16px;
+            width: 32px;
+            height: 32px;
+            background: 
+                /* Cabelo */
+                linear-gradient(90deg, 
+                    transparent 0px, transparent 8px,
+                    #8B4513 8px, #8B4513 24px,
+                    transparent 24px),
+                /* Rosto */
+                linear-gradient(90deg, 
+                    transparent 0px, transparent 4px,
+                    #F4C2A1 4px, #F4C2A1 28px,
+                    transparent 28px);
+            background-size: 32px 8px, 32px 24px;
+            background-position: 0 0, 0 8px;
+            background-repeat: no-repeat;
+        }
+
+        /* Olhos */
+        .eyes {
+            position: absolute;
+            top: 12px;
+            left: 8px;
+            width: 16px;
+            height: 4px;
+        }
+
+        .eye {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #000;
+        }
+
+        .eye.left { left: 2px; }
+        .eye.right { right: 2px; }
+
+        /* Boca */
+        .mouth {
+            position: absolute;
+            top: 20px;
+            left: 12px;
+            width: 8px;
+            height: 2px;
+            background: #000;
+        }
+
+        /* Corpo */
+        .body {
+            position: absolute;
+            top: 32px;
+            left: 12px;
+            width: 40px;
+            height: 32px;
+            background: #4169E1; /* Camisa azul */
+        }
+
+        /* Braços */
+        .arm {
+            position: absolute;
+            top: 36px;
+            width: 8px;
+            height: 24px;
+            background: #F4C2A1; /* Cor da pele */
+        }
+
+        .arm.left { left: 4px; }
+        .arm.right { right: 4px; }
+
+        /* Pernas */
+        .leg {
+            position: absolute;
+            top: 64px;
+            width: 16px;
+            height: 32px;
+            background: #2F4F4F; /* Calça escura */
+        }
+
+        .leg.left { left: 16px; }
+        .leg.right { right: 16px; }
+
+        /* Pés */
+        .foot {
+            position: absolute;
+            bottom: -4px;
+            width: 20px;
+            height: 8px;
+            background: #654321; /* Sapatos marrons */
+            left: -2px;
+        }
+
+        /* Animação suave */
+        .bob {
+            animation: idle 2s ease-in-out infinite;
+        }
+
+        @keyframes idle {
+            0%, 100% { transform: scale(3) translateY(0); }
+            50% { transform: scale(3) translateY(-1px); }
+        }
+
+        /* Controles simples */
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .btn:hover {
+            background: #666;
+        }
+
+        .title {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="character-container">
+        <div class="title">BOB</div>
+        
+        <div class="bob" id="bob">
+            <!-- Cabeça -->
+            <div class="head">
+                <div class="eyes">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+            
+            <!-- Corpo -->
+            <div class="body"></div>
+            
+            <!-- Braços -->
+            <div class="arm left"></div>
+            <div class="arm right"></div>
+            
+            <!-- Pernas -->
+            <div class="leg left">
+                <div class="foot"></div>
+            </div>
+            <div class="leg right">
+                <div class="foot"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="flipCharacter()">↔️ Virar</button>
+            <button class="btn" onclick="changeExpression()">� Expressão</button>
+        </div>
+    </div>
+
+    <script>
+        let flipped = false;
+        let expression = 0;
+
+        function flipCharacter() {
+            const bob = document.getElementById('bob');
+            flipped = !flipped;
+            bob.style.transform = flipped ? 'scale(-3, 3)' : 'scale(3)';
+        }
+
+        function changeExpression() {
+            const mouth = document.querySelector('.mouth');
+            expression = (expression + 1) % 3;
+            
+            switch(expression) {
+                case 0: // Normal
+                    mouth.style.background = '#000';
+                    mouth.style.borderRadius = '0';
+                    break;
+                case 1: // Feliz
+                    mouth.style.background = '#000';
+                    mouth.style.borderRadius = '0 0 4px 4px';
+                    break;
+                case 2: // Triste
+                    mouth.style.background = '#000';
+                    mouth.style.borderRadius = '4px 4px 0 0';
+                    break;
+            }
+        }
+
+        // Piscar automático
+        setInterval(() => {
+            const eyes = document.querySelectorAll('.eye');
+            eyes.forEach(eye => {
+                eye.style.height = '1px';
+                setTimeout(() => eye.style.height = '4px', 100);
+            });
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob - Pixel Art Simples</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .pixel-grid {
+            display: grid;
+            gap: 1px;
+            margin: 20px;
+        }
+
+        .pixel {
+            box-sizing: border-box;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4169E1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #5179f1;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #555;
+        }
+
+        pre {
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 20px;
+            max-width: 500px;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bob - Pixel Art</h1>
+
+    <div class="container">
+        <div id="character"></div>
+        
+        <div class="controls">
+            <button id="zoomIn">Aumentar (+)</button>
+            <button id="zoomOut">Diminuir (-)</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>Guia de Cores</h3>
+        <div class="legend" id="colorLegend"></div>
+        
+        <button id="showCode" style="margin-top: 20px;">Ver Código</button>
+        <div id="codeBlock" style="display: none; width: 100%;">
+            <pre id="codeContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Bob em formato de array de caracteres
+        const bobArray = [
+            '...BBBB...',  // 0 - Cabelo
+            '..BBBBBB..',  // 1
+            '.SSSSSSSS.',  // 2 - Rosto
+            '.SEESEESS.',  // 3 - Olhos
+            '.SSSSSSSS.',  // 4
+            '.SSSSSSSS.',  // 5
+            '..SSSSSS..',  // 6 - Pescoço
+            '.AAAAAAAA.',  // 7 - Camisa
+            'AAAAAAAAAA',  // 8
+            '.AAAAAAAA.',  // 9
+            '..AAAAAA..',  // 10
+            '..PPPPPP..',  // 11 - Calças
+            '..PPPPPP..',  // 12
+            '..PP..PP..',  // 13 - Pernas
+            '..PP..PP..',  // 14
+            '..MM..MM..'   // 15 - Sapatos
+        ];
+
+        // Mapeamento de cores
+        const colorMap = {
+            '.': 'transparent',    // Transparente
+            'B': '#8B4513',        // Cabelo marrom
+            'S': '#F4C2A1',        // Pele
+            'E': '#000000',        // Olhos
+            'A': '#4169E1',        // Camisa azul
+            'P': '#2F4F4F',        // Calças cinza escuro
+            'M': '#654321'         // Sapatos marrons
+        };
+
+        // Descrições para o guia
+        const colorDesc = {
+            'B': 'Cabelo',
+            'S': 'Pele',
+            'E': 'Olhos',
+            'A': 'Camisa',
+            'P': 'Calças',
+            'M': 'Sapatos'
+        };
+
+        // Tamanho dos pixels (será ajustado pelos botões)
+        let pixelSize = 15;
+        
+        // Renderizar o personagem usando CSS Grid
+        function renderCharacter() {
+            const container = document.getElementById('character');
+            container.innerHTML = '';
+            
+            const rows = bobArray.length;
+            const cols = bobArray[0].length;
+            
+            const grid = document.createElement('div');
+            grid.className = 'pixel-grid';
+            grid.style.gridTemplateRows = `repeat(${rows}, ${pixelSize}px)`;
+            grid.style.gridTemplateColumns = `repeat(${cols}, ${pixelSize}px)`;
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    pixel.style.width = pixelSize + 'px';
+                    pixel.style.height = pixelSize + 'px';
+                    
+                    const colorCode = bobArray[r][c];
+                    pixel.style.backgroundColor = colorMap[colorCode];
+                    
+                    grid.appendChild(pixel);
+                }
+            }
+            
+            container.appendChild(grid);
+        }
+
+        // Criar legenda de cores
+        function createLegend() {
+            const legend = document.getElementById('colorLegend');
+            legend.innerHTML = '';
+            
+            for (const [key, color] of Object.entries(colorMap)) {
+                if (key === '.') continue; // Pular transparente
+                
+                const item = document.createElement('div');
+                item.className = 'color-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = color;
+                
+                const label = document.createElement('span');
+                label.textContent = `'${key}' = ${colorDesc[key]}`;
+                
+                item.appendChild(colorBox);
+                item.appendChild(label);
+                legend.appendChild(item);
+            }
+        }
+
+        // Gerar código JavaScript
+        function generateCode() {
+            let code = '// Personagem Bob em formato de array\n';
+            code += 'const bob = [\n';
+            
+            bobArray.forEach((row, index) => {
+                code += `    '${row}',  // ${index}\n`;
+            });
+            
+            code += '];\n\n';
+            
+            code += '// Mapeamento de cores\n';
+            code += 'const colorMap = {\n';
+            for (const [key, color] of Object.entries(colorMap)) {
+                const desc = colorDesc[key] || 'Transparente';
+                code += `    '${key}': '${color}', // ${desc}\n`;
+            }
+            code += '};\n';
+            
+            return code;
+        }
+
+        // Inicializar tudo
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCharacter();
+            createLegend();
+            
+            // Zoom in
+            document.getElementById('zoomIn').addEventListener('click', () => {
+                pixelSize = Math.min(30, pixelSize + 3);
+                renderCharacter();
+            });
+            
+            // Zoom out
+            document.getElementById('zoomOut').addEventListener('click', () => {
+                pixelSize = Math.max(6, pixelSize - 3);
+                renderCharacter();
+            });
+            
+            // Mostrar/esconder código
+            document.getElementById('showCode').addEventListener('click', () => {
+                const codeBlock = document.getElementById('codeBlock');
+                const codeContent = document.getElementById('codeContent');
+                const showButton = document.getElementById('showCode');
+                
+                if (codeBlock.style.display === 'none') {
+                    codeContent.textContent = generateCode();
+                    codeBlock.style.display = 'block';
+                    showButton.textContent = 'Esconder Código';
+                } else {
+                    codeBlock.style.display = 'none';
+                    showButton.textContent = 'Ver Código';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

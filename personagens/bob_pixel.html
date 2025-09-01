@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Sprite do Bob - 8x12 pixels simples */
+        .bob {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            width: 64px;
+            height: 96px;
+            gap: 0;
+            image-rendering: pixelated;
+            transform: scale(4);
+        }
+
+        .pixel {
+            width: 8px;
+            height: 8px;
+        }
+
+        /* Cores */
+        .hair { background: #8B4513; }    /* Cabelo castanho */
+        .skin { background: #F4C2A1; }    /* Pele */
+        .eye { background: #000; }        /* Olhos */
+        .shirt { background: #4169E1; }   /* Camisa azul */
+        .arm { background: #F4C2A1; }     /* Braços (pele) */
+        .pants { background: #2F4F4F; }   /* Calça escura */
+        .shoe { background: #654321; }    /* Sapatos marrons */
+        .empty { background: transparent; } /* Vazio */
+    </style>
+</head>
+<body>
+    <div class="bob">
+        <!-- Linha 1 - Cabelo -->
+        <div class="pixel empty"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel hair"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 2 - Rosto -->
+        <div class="pixel empty"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel eye"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel eye"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 3 - Rosto -->
+        <div class="pixel empty"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 4 - Pescoço -->
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel skin"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 5 - Camisa -->
+        <div class="pixel arm"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel arm"></div>
+
+        <!-- Linha 6 - Camisa -->
+        <div class="pixel arm"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel arm"></div>
+
+        <!-- Linha 7 - Camisa -->
+        <div class="pixel empty"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel shirt"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 8 - Calça -->
+        <div class="pixel empty"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 9 - Calça -->
+        <div class="pixel empty"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 10 - Pernas -->
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 11 - Pernas -->
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel pants"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+
+        <!-- Linha 12 - Sapatos -->
+        <div class="pixel empty"></div>
+        <div class="pixel shoe"></div>
+        <div class="pixel shoe"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel empty"></div>
+        <div class="pixel shoe"></div>
+        <div class="pixel shoe"></div>
+        <div class="pixel empty"></div>
+    </div>
+</body>
+</html>

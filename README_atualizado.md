@@ -87,7 +87,7 @@ python main.py
 
 Recursos planejados para futuras atualizações:
 - Mapa de mundo explorável
-- Sistema de combate
+- Sistema de combate aprimorado
 - Inventário e itens colecionáveis
 - NPCs e sistema de diálogo
 - Masmorras e quebra-cabeças
@@ -96,8 +96,8 @@ Recursos planejados para futuras atualizações:
 
 ## Tecnologias
 
-- JavaScript para versão web
-- HTML5 Canvas para renderização
+- JavaScript e HTML5 Canvas para versão web
+- Web Audio API para efeitos sonoros e vozes sussurrantes
 - Python e Pygame para versão desktop
 
 ## Licença
