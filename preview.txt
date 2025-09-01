@@ -1,0 +1,6 @@
+Coloque aqui uma captura de tela do jogo. 
+Para criar uma imagem de preview:
+1. Execute o jogo no navegador (index.html)
+2. Tire um print screen da tela inicial
+3. Salve como "preview.png" nesta pasta
+4. Envie para o GitHub usando o arquivo "enviar github.bat"

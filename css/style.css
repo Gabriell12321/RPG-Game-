@@ -1,0 +1,194 @@
+/* Estilos para o jogo RPG */
+@font-face {
+  font-family: 'VCR-OSD-MONO';
+  src: url('https://cdn.jsdelivr.net/gh/tpkn/vercrosd-font/VCR_OSD_MONO_1.001.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: #050a10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'VCR-OSD-MONO', monospace;
+  overflow: hidden;
+  color: #c8e2f0;
+}
+
+/* Canvas principal */
+#screen {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 12px solid #071218;
+  border-radius: 2px;
+  box-shadow: 0 0 30px rgba(0,128,128,0.15), inset 0 0 8px rgba(0,0,0,0.4);
+  background: #000;
+  display: block;
+  position: relative;
+}
+
+/* Container principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  max-width: 1100px;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Controles do áudio */
+.audio-controls {
+  position: absolute;
+  bottom: -30px;
+  right: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.audio-controls:hover {
+  opacity: 1;
+}
+
+.audio-btn {
+  background: #122630;
+  color: #7ea;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.audio-btn:hover {
+  background: #1a3542;
+}
+
+.audio-btn.muted {
+  color: #555;
+  background: #0a1a22;
+}
+
+/* Informações e instruções */
+.info-bar {
+  position: absolute;
+  bottom: -32px;
+  left: 20px;
+  color: #7ea;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 3px rgba(0,180,120,0.4);
+}
+
+/* Efeito de scanline */
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0),
+    rgba(0,0,0,0) 1px,
+    rgba(0,0,0,0.2) 1px,
+    rgba(0,0,0,0.2) 2px
+  );
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.1;
+}
+
+/* Fundo com gradiente */
+body {
+  background: radial-gradient(ellipse at center, #071a22 0%, #040c12 90%);
+}
+
+/* Créditos e sobre o jogo */
+.credits {
+  max-width: 800px;
+  text-align: center;
+  font-size: 12px;
+  color: #5a8896;
+  margin-top: 60px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+/* Modo tela cheia */
+.fullscreen-container {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background-color: #000;
+}
+
+.fullscreen-container #screen {
+  max-height: 100vh;
+  max-width: 100vw;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.fullscreen-container .audio-controls {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,20,30,0.7);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.fullscreen-container .info-bar {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0,20,30,0.7);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.fullscreen-btn-active {
+  background: #164454 !important;
+  color: #fff !important;
+}
+
+/* Responsivo */
+@media (max-width: 800px) {
+  #screen {
+    width: 90%;
+    height: auto;
+  }
+  
+  .info-bar, .audio-controls {
+    position: static;
+    margin-top: 10px;
+  }
+}
+
+/* Quando o jogo está rodando */
+.game-running .menu-only {
+  display: none;
+}

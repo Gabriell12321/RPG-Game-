@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos de sistema do Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Logs e arquivos temporários
+*.log
+*.bak
+*.tmp
+logs/
+
+# Arquivos de configuração do editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Arquivos de ambiente
+.env
+venv/
+ENV/
+
+# Arquivos de execução do VS Code
+.ipynb_checkpoints/
