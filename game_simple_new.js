@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ultimoDano: 0,
         ultimoAtaque: 0,
         ultimaCura: 0,
+        lanterna: false, // Adicionado para rastrear o estado da lanterna
         // Propriedades de aparência
         aparencia: {
             corCabelo: '#8B4513', // Marrom
@@ -136,10 +137,87 @@ document.addEventListener('DOMContentLoaded', function() {
             whisperNoiseNode.frequency.value = 2000;
             whisperNoiseNode.Q.value = 0.5;
             
+            // Adicionar sistema de áudio ao objeto global GameSystem
+            window.GameSystem = window.GameSystem || {};
+            window.GameSystem.audio = {
+                playSound: playSound
+            };
+            
             return true;
         } catch (e) {
             console.log("Áudio não suportado:", e);
             return false;
+        }
+    }
+    
+    // Reproduzir sons diversos
+    function playSound(soundId) {
+        if (!audioContext || !audioConfig.sfxEnabled) return;
+        
+        try {
+            // Configurações específicas para cada tipo de som
+            let oscillatorType = 'sine';
+            let frequency = 440;
+            let duration = 0.3;
+            let volume = audioConfig.sfxVolume;
+            
+            // Configurar som baseado no ID
+            switch(soundId) {
+                case 'lanterna_on':
+                    oscillatorType = 'sine';
+                    frequency = 650;
+                    duration = 0.2;
+                    volume = 0.3;
+                    break;
+                    
+                case 'lanterna_off':
+                    oscillatorType = 'sine';
+                    frequency = 450;
+                    duration = 0.3;
+                    volume = 0.25;
+                    break;
+                    
+                case 'lanterna_empty':
+                    oscillatorType = 'triangle';
+                    frequency = 150;
+                    duration = 0.6;
+                    volume = 0.4;
+                    break;
+                    
+                default:
+                    // Som padrão
+                    break;
+            }
+            
+            // Criar oscilador
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = oscillatorType;
+            oscillator.frequency.value = frequency;
+            
+            // Criar gain node para controlar o volume
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0;
+            
+            // Conectar nodes
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Tempo atual
+            const now = audioContext.currentTime;
+            
+            // Configurar envelope ADSR simples
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.05);
+            gainNode.gain.linearRampToValueAtTime(volume * 0.8, now + 0.1);
+            gainNode.gain.linearRampToValueAtTime(volume * 0.6, now + duration * 0.5);
+            gainNode.gain.linearRampToValueAtTime(0, now + duration);
+            
+            // Iniciar e parar o oscilador
+            oscillator.start(now);
+            oscillator.stop(now + duration);
+            
+        } catch(e) {
+            console.error("Erro ao reproduzir som:", soundId, e);
         }
     }
     
@@ -1359,7 +1437,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const corPele = '#FFD1B7'; // Cor da pele mais realista
             const corRoupa = jogador.vida > 50 ? 
                 `rgb(${30 + pulsacao * 20}, ${100 + pulsacao * 30}, ${190 + pulsacao * 35})` : 
-                `rgb(${150 + pulsacao * 30}, ${40 + pulsacao * 20}, ${40 + pulsacao * 20})`;
+                `rgb(${150 + pulsacao * 30}, ${40 + pulsacao * 20}, ${40 + pulsacao * 20})` ;
             const corCabelo = '#8B4513'; // Marrom
             
             // Offsets de braços e pernas
@@ -1463,8 +1541,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Olhos (com expressão baseada na vida/sanidade)
                 const expressaoOlhos = jogador.vida < 30 ? 'x' : 
                                 jogador.sanidade < 30 ? 'o' : 
-                                '.';
-                                
+                                '.';                                
+                
                 // Cor dos olhos
                 const corOlhos = jogador.vida > 30 ? '#0066ff' : '#ff0000';
                 
@@ -1867,6 +1945,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Renderizar elementos do jogo
                 renderizarInimigos(bctx);
                 renderizarJogador(bctx);
+                
+                // Renderizar sistema de lanterna (entre a renderização do jogo e a UI)
+                if (window.LanternaSystem && typeof window.LanternaSystem.render === 'function') {
+                    // Calcular posição da câmera
+                    const cameraX = jogador.posicao.x - BASE_W / 2;
+                    const cameraY = jogador.posicao.y - BASE_H / 2;
+                    
+                    // Atualizar a direção do jogador no sistema de lanterna
+                    if (typeof window.LanternaSystem.setDirecao === 'function') {
+                        window.LanternaSystem.setDirecao(jogador.direcao || 'down');
+                    }
+                    
+                    window.LanternaSystem.render(bctx, cameraX, cameraY);
+                    
+                    // Renderizar UI de diagnóstico da lanterna se estiver disponível
+                    if (window.LanternaDiagnostico && typeof window.LanternaDiagnostico.renderUI === 'function') {
+                        window.LanternaDiagnostico.renderUI(bctx);
+                    }
+                }
+                
+                // Renderizar sistema de iluminação adaptativa
+                if (window.LightingSystem && typeof window.LightingSystem.render === 'function') {
+                    // Calcular posição da câmera
+                    const cameraX = jogador.posicao.x - BASE_W / 2;
+                    const cameraY = jogador.posicao.y - BASE_H / 2;
+                    
+                    window.LightingSystem.render(bctx, cameraX, cameraY);
+                }
+                
                 renderizarUI(bctx);
                 
                 // Mensagem de instrução
@@ -1874,7 +1981,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 bctx.fillRect(0, BASE_H - 30, BASE_W, 30);
                 bctx.fillStyle = '#ffffff';
                 bctx.font = '10px monospace';
-                bctx.fillText("Use WASD para mover, ESPAÇO para atacar, E para mudar de ambiente, ESC para menu", 5, BASE_H - 10);
+                bctx.fillText("Use WASD para mover, ESPAÇO para atacar, F para lanterna, E para mudar de ambiente, ESC para menu", 5, BASE_H - 10);
                 
                 // Indicador de ambiente atual
                 bctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -2005,6 +2112,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     playSoundEffect('menuMove');
                 }
                 e.preventDefault();
+                break;
+            // Ativar/desativar diagnóstico da lanterna com F9
+            case 'F9':
+                if (window.LanternaDiagnostico) {
+                    if (window.LanternaDiagnostico.isAtivo && window.LanternaDiagnostico.isAtivo()) {
+                        window.LanternaDiagnostico.desativar();
+                        window.LanternaDiagnostico.mostrarUI(false);
+                        console.log('Diagnóstico da lanterna desativado');
+                    } else {
+                        window.LanternaDiagnostico.ativar();
+                        window.LanternaDiagnostico.mostrarUI(true);
+                        console.log('Diagnóstico da lanterna ativado');
+                    }
+                }
                 break;
             case 'Enter':
                 if (gameState === 'menu') {
@@ -2468,8 +2589,99 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Loop do jogo
     function loop() {
+        if (gameState === 'game' && !jogoInicializado) {
+            inicializarJogo();
+        }
+        
+        atualizar();
+        desenhar();
+        
         tick++;
-        render(tick);
+        requestAnimationFrame(loop);
+    }
+    
+    // Inicializar o jogo
+    function inicializarJogo() {
+        console.log("Inicializando o jogo...");
+        
+        // Inicializar sistema de áudio ao interagir
+        if (!audioContext) {
+            initAudio();
+        }
+        
+        // Inicializar sistema de personagens
+        if (!gerenciadorPersonagens) {
+            gerenciadorPersonagens = new GerenciadorPersonagens(bctx);
+            gerenciadorPersonagens.carregarPersonagemPrincipal(jogador.aparencia);
+        }
+
+        // Inicializar sistema de lanterna
+        if (window.LanternaSystem) {
+            window.LanternaSystem.init();
+        }
+        
+        jogoInicializado = true;
+        console.log("Jogo inicializado com sucesso!");
+    }
+    
+    // Função de atualização
+    function atualizar() {
+        // Atualizar estado do jogador (vida, sanidade, etc)
+        if (jogador.vida > 0) {
+            jogador.vida -= 0.01; // Exemplo de redução de vida ao longo do tempo
+        }
+        
+        if (jogador.sanidade > 0) {
+            jogador.sanidade -= 0.005; // Exemplo de redução de sanidade ao longo do tempo
+        }
+        
+        // Atualizar inimigos
+        atualizarInimigos(1/60);
+        
+        // Verificar transições de ambiente
+        if (jogador.posicao.y < 0) {
+            ambiente = 'casa';
+            jogador.posicao.y = BASE_H - 1;
+            spawnarInimigos(ambiente);
+        } else if (jogador.posicao.y > BASE_H) {
+            ambiente = 'quintal';
+            jogador.posicao.y = 1;
+            spawnarInimigos(ambiente);
+        }
+        
+        // Atualizar sistema de lanterna
+        if (window.LanternaSystem) {
+            window.LanternaSystem.update(jogador.posicao, jogador.animacao.direcao);
+        }
+    }
+    
+    // Função principal de desenho
+    function desenhar() {
+        bctx.clearRect(0, 0, BASE_W, BASE_H);
+        
+        // Desenhar fundo
+        drawAnimatedBackground(bctx, tick);
+        
+        // Desenhar jogador
+        renderizarJogador(bctx);
+        
+        // Desenhar inimigos
+        renderizarInimigos(bctx);
+        
+        // Desenhar UI
+        renderizarUI(bctx);
+    }
+    
+    // Loop principal do jogo
+    function loop() {
+        if (gameState === 'game' && !jogoInicializado) {
+            inicializarJogo();
+        }
+        
+        atualizar();
+        desenhar();
+        
+        tick++;
         requestAnimationFrame(loop);
     }
     

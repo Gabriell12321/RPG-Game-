@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "typeRoots": ["./js/types", "./node_modules/@types"],
+    "lib": ["DOM", "ESNext"]
+  },
+  "include": ["./js/**/*", "./personagens/**/*", "./*.js"],
+  "exclude": ["node_modules", "dist"]
+}

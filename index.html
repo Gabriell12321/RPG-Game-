@@ -22,6 +22,36 @@
         transform: scale(1.1);
       }
     }
+    
+    /* Efeito glitch na título */
+    .game-title::before, .game-title::after {
+      content: "Pesadelo Pixelado";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+    }
+    
+    .game-title::before {
+      color: #0ff;
+      z-index: -1;
+      animation: glitch-effect 3s infinite alternate;
+    }
+    
+    .game-title::after {
+      color: #f0f;
+      z-index: -2;
+      animation: glitch-effect 2s infinite alternate-reverse;
+    }
+    
+    @keyframes glitch-effect {
+      0%, 5%, 10%, 100% { transform: translate(0); }
+      1% { transform: translate(-2px, -2px); }
+      2% { transform: translate(2px, 2px); }
+      3% { transform: translate(-1px, 1px); }
+      4% { transform: translate(1px, -1px); }
+    }
   </style>
 </head>
 <body>
@@ -31,7 +61,7 @@
   <div class="container" id="gameContainer">
     <div class="scanline"></div>
     <canvas id="screen"></canvas>
-    <div class="info-bar">Controles: WASD = mover • ESPAÇO = atacar • E = mudar ambiente • ESC = menu • F11 = tela cheia</div>
+    <div class="info-bar">Controles: WASD = mover • ESPAÇO = atacar • E = interagir • F = lanterna • SHIFT = correr • ESC = menu • F11 = tela cheia</div>
     <div class="audio-controls">
       <button class="audio-btn" id="musicToggle">🔊 Música</button>
       <button class="audio-btn" id="sfxToggle">🔊 Sons</button>
@@ -109,9 +139,24 @@
   </script>
   <!-- Scripts do jogo -->
   <script src="js/efeitos_visuais.js"></script>
+  <script src="js/render_3d_effects.js"></script>
+  <script src="js/lighting_advanced.js"></script>
+  <script src="js/post_processing.js"></script>
+  <script src="js/particle_system_advanced.js"></script>
+  <script src="js/world_render_funcs.js"></script>
+  <script src="js/world_render_effects.js"></script>
+  <script src="js/world_render.js"></script>
+  <script src="js/graphics_initializer.js"></script>
   <script src="personagens/personagemPrincipal.js"></script>
   <script src="personagens/animacoesAvancadas.js"></script>
-  <script src="personagens/renderizacaoJogador.js"></script>
+  <script src="js/CharacterAnimations.js"></script>
+  <script src="js/RenderizacaoJogador.js"></script>
+  <script src="js/PlayerController.js"></script>
+  <script src="js/LanternaSystem.js"></script>
+  <script src="js/LightSourceManager.js"></script>
+  <script src="js/LightingIntegration.js"></script>
+  <script src="js/lighting_init.js"></script>
+  <script src="personagens/mobs.js"></script>
   <script src="cutscene.js"></script>
   <script src="game_simple_new.js"></script>
   <script>

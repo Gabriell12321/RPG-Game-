@@ -176,7 +176,31 @@
     // Inicializar áudio
     function initAudio() {
         try {
+            // Criar AudioContext mas deixá-lo suspenso até interação do usuário
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Verificar se o contexto está suspenso (estado padrão em navegadores modernos)
+            if (audioContext.state === 'suspended') {
+                // Adicionar listener para interação do usuário para resumir o contexto
+                const resumeAudio = function() {
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log('AudioContext resumed successfully');
+                        });
+                    }
+                    
+                    // Remover os listeners após a primeira interação
+                    document.removeEventListener('click', resumeAudio);
+                    document.removeEventListener('keydown', resumeAudio);
+                    document.removeEventListener('touchstart', resumeAudio);
+                };
+                
+                document.addEventListener('click', resumeAudio);
+                document.addEventListener('keydown', resumeAudio);
+                document.addEventListener('touchstart', resumeAudio);
+                
+                console.log('AudioContext criado. Aguardando interação do usuário para iniciar áudio.');
+            }
         } catch(e) {
             console.error("Áudio não suportado:", e);
             config.audioEnabled = false;
@@ -186,6 +210,12 @@
     // Tocar sussurro
     function playWhisper(text) {
         if (!audioContext || !config.audioEnabled) return;
+        
+        // Verificar se o contexto de áudio está suspenso
+        if (audioContext.state === 'suspended') {
+            console.warn("AudioContext está suspenso. O áudio será reproduzido após interação do usuário.");
+            return; // Não tenta reproduzir se o contexto estiver suspenso
+        }
         
         try {
             // Criar fonte de ruído branco para o sussurro

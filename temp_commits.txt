@@ -1,0 +1,4 @@
+cbc7b02 versão funcionando v2
+82b6598 Implementado sistema de animações avançadas e melhorias de combate
+b58057c Atualização completa: cutscenes, vozes sussurrantes, melhorias visuais e scripts de upload
+95ac6e8 Inicio

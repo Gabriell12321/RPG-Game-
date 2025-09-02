@@ -1,21 +1,31 @@
 // Tela inicial para RPG de terror com chuva e música triste
 // Constantes globais do jogo
-const BASE_W = 320, BASE_H = 180, SCALE = 3;
+const BASE_W = 400, BASE_H = 225, SCALE = 3;
 const SCREEN_W = BASE_W * SCALE, SCREEN_H = BASE_H * SCALE;
 
 // Criar/mesclar objeto global para compartilhar funções e variáveis entre arquivos, sem sobrescrever
 window.GameSystem = window.GameSystem || { constants: {}, functions: {}, state: {} };
 window.GameSystem.constants = Object.assign({
   WORLD_CHUNK_SIZE: 16,
-  VISIBLE_CHUNKS_RADIUS: 2,
+  VISIBLE_CHUNKS_RADIUS: 3,
   WORLD_SEED: Math.random() * 10000 | 0,
-  TILE_SIZE: 16
+  TILE_SIZE: 16,
+  BASE_W: BASE_W,
+  BASE_H: BASE_H,
+  SCREEN_W: SCREEN_W,
+  SCREEN_H: SCREEN_H,
+  SCALE: SCALE
 }, window.GameSystem.constants || {});
 window.GameSystem.functions = window.GameSystem.functions || {};
 window.GameSystem.state = Object.assign({
   isLoaded: false,
   currentState: 'loading',
-  worldInitialized: false
+  worldInitialized: false,
+  graphicsQuality: 'high', // low, medium, high, ultra
+  useAdvancedLighting: true,
+  usePostProcessing: true,
+  useParticleEffects: true,
+  use3DEffects: true
 }, window.GameSystem.state || {});
 
 // Variável para armazenar o estado do jogo

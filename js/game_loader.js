@@ -17,6 +17,12 @@
     'js/world_render_funcs.js',
     'js/world_render_effects.js',
     'js/world_render.js',
+    // Sistemas de iluminação
+    'js/LanternaSystem.js',
+    'js/LightSourceManager.js',
+    'js/LightingIntegration.js',
+    'js/lighting_advanced.js',
+    'js/lanterna_diagnostico.js', // Diagnóstico para compatibilidade
     // Personagens (ordem: dados -> personagem -> gerenciador)
     'personagens/mobs.js',
     'personagens/personagemPrincipal.js',
