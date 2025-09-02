@@ -108,6 +108,9 @@
     })();
   </script>
   <!-- Scripts do jogo -->
+  <script src="js/efeitos_visuais.js"></script>
+  <script src="personagens/personagemPrincipal.js"></script>
+  <script src="personagens/animacoesAvancadas.js"></script>
   <script src="cutscene.js"></script>
   <script src="game_simple_new.js"></script>
   <script>
@@ -119,6 +122,18 @@
     
     // Iniciar cutscene automaticamente
     document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar sistema de efeitos visuais
+      if (window.EfeitosVisuais) {
+        window.EfeitosVisuais.init();
+        console.log('Sistema de efeitos visuais inicializado');
+      }
+      
+      // Inicializar sistema de animações avançadas
+      if (window.CharacterAnimations) {
+        window.CharacterAnimations.init();
+        console.log('Sistema de animações avançadas inicializado');
+      }
+      
       setTimeout(() => {
         // Auto-iniciar a cutscene após um breve delay
         if (window.CutsceneSystem && window.CutsceneSystem.start) {

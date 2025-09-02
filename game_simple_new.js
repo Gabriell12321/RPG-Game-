@@ -297,8 +297,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Tecla de interação
+    // Controles de jogador
     let teclaE = false;
+    let atacando = false;
+    let tipoAtaque = 'rapido'; // 'rapido', 'medio', 'forte'
+    let ultimoAtaque = 0;
+    let tecla1 = false;
+    let tecla2 = false;
+    let tecla3 = false;
     
     // Função para desenhar o fundo animado
     function drawAnimatedBackground(ctx, t) {
@@ -687,7 +693,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tamanho: mob.tamanho,
             alerta: false,
             ultimoAtaque: 0,
-            direcao: Math.random() * Math.PI * 2
+            direcao: Math.random() * Math.PI * 2,
+            danoRecebido: 0  // Valor do último dano recebido
         };
     }
     
@@ -827,77 +834,184 @@ document.addEventListener('DOMContentLoaded', function() {
             const y = inimigo.posicao.y;
             const pulsacao = Math.sin(tick * 0.15 + inimigo.id) * 0.3 + 0.7;
             
+            // Calcular o estado de saúde do inimigo (para efeitos visuais)
+            const vidaPercent = inimigo.vida / inimigo.vidaMaxima;
+            
+            // Verificar se o inimigo foi atingido recentemente
+            const tempoDesdeUltimoAtaque = Date.now() - inimigo.ultimoAtaque;
+            const foiAtingido = tempoDesdeUltimoAtaque < 500;
+            
             // Sombra do inimigo
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.fillRect(x - inimigo.tamanho / 2 + 1, y - inimigo.tamanho / 2 + 1, 
-                        inimigo.tamanho, inimigo.tamanho);
+            ctx.beginPath();
+            ctx.ellipse(x, y + inimigo.tamanho/2, inimigo.tamanho * 0.6, inimigo.tamanho * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Efeito de pulsação quando atingido
+            let escala = 1;
+            if (foiAtingido) {
+                escala = 1 + Math.sin(tempoDesdeUltimoAtaque * 0.05) * 0.2;
+            }
+            
+            // Salvar o contexto para aplicar transformações
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(escala, escala);
             
             // Corpo do inimigo com efeito de pulsação
             if (inimigo.tipo === 'sombra') {
                 // Sombra - formato mais irregular
-                ctx.fillStyle = `rgba(50, 0, 50, ${0.8 * pulsacao})`;
-                ctx.fillRect(x - inimigo.tamanho / 2, y - inimigo.tamanho / 2, 
-                            inimigo.tamanho, inimigo.tamanho);
+                // Cor base mais escura quando ferido
+                const corBase = foiAtingido ? 'rgba(100, 0, 100, 0.8)' : 'rgba(50, 0, 50, 0.8)';
+                ctx.fillStyle = `rgba(${parseInt(corBase.slice(5,8))}, 0, ${parseInt(corBase.slice(5,8))}, ${0.8 * pulsacao})`;
+                
+                if (foiAtingido) {
+                    // Forma distorcida quando atingido
+                    ctx.beginPath();
+                    for (let i = 0; i < 8; i++) {
+                        const angulo = i * Math.PI / 4;
+                        const raio = inimigo.tamanho/2 * (0.8 + Math.random() * 0.4);
+                        const px = Math.cos(angulo) * raio;
+                        const py = Math.sin(angulo) * raio;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(px, py);
+                        } else {
+                            ctx.lineTo(px, py);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    // Forma normal
+                    ctx.fillRect(-inimigo.tamanho / 2, -inimigo.tamanho / 2, 
+                                inimigo.tamanho, inimigo.tamanho);
+                }
                 
                 // Detalhes da sombra
-                ctx.fillStyle = `rgba(80, 0, 80, ${0.6 * pulsacao})`;
-                ctx.fillRect(x - inimigo.tamanho / 2 + 1, y - inimigo.tamanho / 2 + 1, 
+                ctx.fillStyle = `rgba(${parseInt(corBase.slice(5,8))+30}, 0, ${parseInt(corBase.slice(5,8))+30}, ${0.6 * pulsacao})`;
+                ctx.fillRect(-inimigo.tamanho / 2 + 1, -inimigo.tamanho / 2 + 1, 
                             inimigo.tamanho - 2, inimigo.tamanho - 2);
                 
                 // Borda escura
                 ctx.strokeStyle = `rgba(20, 0, 20, ${pulsacao})`;
                 ctx.lineWidth = 1;
-                ctx.strokeRect(x - inimigo.tamanho / 2, y - inimigo.tamanho / 2, 
+                ctx.strokeRect(-inimigo.tamanho / 2, -inimigo.tamanho / 2, 
                               inimigo.tamanho, inimigo.tamanho);
                 
             } else if (inimigo.tipo === 'fantasma') {
                 // Fantasma - mais translúcido e brilhante
-                ctx.fillStyle = `rgba(200, 200, 255, ${0.6 * pulsacao})`;
+                // Cor base mais intensa quando ferido
+                const intensidade = foiAtingido ? 0.8 : 0.6;
+                ctx.fillStyle = `rgba(200, 200, 255, ${intensidade * pulsacao})`;
                 
                 // Forma mais arredondada para o fantasma
                 ctx.beginPath();
-                ctx.arc(x, y, inimigo.tamanho / 2, 0, Math.PI * 2);
+                
+                if (foiAtingido) {
+                    // Forma distorcida quando atingido
+                    const distorcao = tempoDesdeUltimoAtaque / 500; // 0-1
+                    for (let i = 0; i < 12; i++) {
+                        const angulo = i * Math.PI / 6;
+                        const raio = inimigo.tamanho/2 * (0.8 + Math.sin(angulo * 3 + tick * 0.1) * 0.3 * (1-distorcao));
+                        const px = Math.cos(angulo) * raio;
+                        const py = Math.sin(angulo) * raio;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(px, py);
+                        } else {
+                            ctx.quadraticCurveTo(
+                                px - Math.sin(angulo) * raio * 0.5,
+                                py + Math.cos(angulo) * raio * 0.5,
+                                px, py
+                            );
+                        }
+                    }
+                } else {
+                    // Forma normal
+                    ctx.arc(0, 0, inimigo.tamanho / 2, 0, Math.PI * 2);
+                }
+                
                 ctx.fill();
                 
                 // Brilho interno
                 ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * pulsacao})`;
                 ctx.beginPath();
-                ctx.arc(x, y, inimigo.tamanho / 3, 0, Math.PI * 2);
+                ctx.arc(0, 0, inimigo.tamanho / 3, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Contorno brilhante
                 ctx.strokeStyle = `rgba(150, 150, 255, ${pulsacao})`;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.arc(x, y, inimigo.tamanho / 2, 0, Math.PI * 2);
+                ctx.arc(0, 0, inimigo.tamanho / 2, 0, Math.PI * 2);
                 ctx.stroke();
             }
             
             // Olhos brilhantes se estiver em alerta
             if (inimigo.alerta) {
                 const brilho = Math.sin(tick * 0.3) * 0.5 + 0.5;
-                ctx.fillStyle = `rgba(255, 0, 0, ${0.8 + brilho * 0.2})`;
+                
+                // Olhos mais vermelhos quando foi atingido
+                const corOlhos = foiAtingido ? `rgba(255, 100, 100, ${0.8 + brilho * 0.2})` : `rgba(255, 0, 0, ${0.8 + brilho * 0.2})`;
+                ctx.fillStyle = corOlhos;
                 
                 // Olhos maiores e mais intimidadores
-                ctx.fillRect(x - 3, y - 2, 2, 1);
-                ctx.fillRect(x + 1, y - 2, 2, 1);
+                const tamanhoOlhos = foiAtingido ? 1.5 : 1;
+                ctx.fillRect(-3, -2, 2 * tamanhoOlhos, 1 * tamanhoOlhos);
+                ctx.fillRect(1, -2, 2 * tamanhoOlhos, 1 * tamanhoOlhos);
                 
                 // Brilho extra nos olhos
                 ctx.fillStyle = `rgba(255, 255, 0, ${brilho})`;
-                ctx.fillRect(x - 2, y - 2, 1, 1);
-                ctx.fillRect(x + 2, y - 2, 1, 1);
+                ctx.fillRect(-2, -2, 1, 1);
+                ctx.fillRect(2, -2, 1, 1);
                 
                 // Aura de ameaça
                 ctx.strokeStyle = `rgba(255, 0, 0, ${0.3 * brilho})`;
                 ctx.lineWidth = 1;
-                ctx.strokeRect(x - inimigo.tamanho / 2 - 2, y - inimigo.tamanho / 2 - 2, 
+                ctx.strokeRect(-inimigo.tamanho / 2 - 2, -inimigo.tamanho / 2 - 2, 
                               inimigo.tamanho + 4, inimigo.tamanho + 4);
             } else {
                 // Olhos normais
                 ctx.fillStyle = inimigo.tipo === 'sombra' ? 'purple' : 'lightblue';
-                ctx.fillRect(x - 2, y - 2, 1, 1);
-                ctx.fillRect(x + 1, y - 2, 1, 1);
+                ctx.fillRect(-2, -2, 1, 1);
+                ctx.fillRect(1, -2, 1, 1);
             }
+            
+            // Exibir dano quando atingido
+            if (foiAtingido) {
+                // Texto de dano que sobe
+                const progress = tempoDesdeUltimoAtaque / 500; // 0-1
+                ctx.fillStyle = 'red';
+                ctx.font = '8px Arial';
+                ctx.fillText('-' + Math.floor(inimigo.danoRecebido || 10), 
+                            0, 
+                            -inimigo.tamanho/2 - 5 - progress * 10);
+                
+                // Adicionar partículas de dano
+                if (window.EfeitosVisuais && Math.random() > 0.8) {
+                    window.EfeitosVisuais.criarSangue(x, y, 1, 1);
+                }
+            }
+            
+            // Restaurar contexto
+            ctx.restore();
+            
+            // Barra de vida para inimigos feridos
+            if (vidaPercent < 1) {
+                const barraLargura = inimigo.tamanho;
+                const barraAltura = 2;
+                
+                // Fundo da barra
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(x - barraLargura/2, y - inimigo.tamanho/2 - 5, barraLargura, barraAltura);
+                
+                // Barra de vida
+                ctx.fillStyle = vidaPercent > 0.5 ? 'lime' : vidaPercent > 0.25 ? 'yellow' : 'red';
+                ctx.fillRect(x - barraLargura/2, y - inimigo.tamanho/2 - 5, barraLargura * vidaPercent, barraAltura);
+            }
+        }
+    }
             
             // Barra de vida melhorada
             const vidaPct = inimigo.vida / inimigo.vidaMaxima;
@@ -954,28 +1068,67 @@ document.addEventListener('DOMContentLoaded', function() {
         // Direção de movimento
         const direcao = jogador.animacao.direcao || 'down';
         
-        // Sombra do personagem (melhorada, oval)
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.beginPath();
-        ctx.ellipse(x, y + 8, 6, 3, 0, 0, Math.PI * 2);
-        ctx.fill();
+        // Atualizar propriedades necessárias para o sistema de animação
+        jogador.x = x;
+        jogador.y = y;
+        jogador.largura = jogador.sprite.width;
+        jogador.altura = jogador.sprite.height;
+        jogador.direcao = direcao;
         
-        // Obter offsets da animação
-        const frameOffset = Math.sin(jogador.animacao.frame * Math.PI / 2) * 0.5;
-        const bobbing = jogador.animacao.andando ? Math.sin(jogador.animacao.frame * Math.PI) * 0.7 : 0;
+        // Verificar se o sistema de animações avançadas está disponível
+        if (window.CharacterAnimations && typeof window.CharacterAnimations.apply === 'function') {
+            // Verificar se estamos atacando
+            if (atacando) {
+                // Iniciar animação de ataque apropriada
+                if (tipoAtaque === 'rapido') {
+                    window.CharacterAnimations.play(jogador, 'attackLight', direcao);
+                } else if (tipoAtaque === 'medio') {
+                    window.CharacterAnimations.play(jogador, 'attackMedium', direcao);
+                } else if (tipoAtaque === 'forte') {
+                    window.CharacterAnimations.play(jogador, 'attackHeavy', direcao);
+                }
+                atacando = false;
+            } else if (jogador.animacao.andando) {
+                // Iniciar animação de caminhada
+                window.CharacterAnimations.play(jogador, 'walk', direcao);
+            } else if (!window.CharacterAnimations.isPlaying('idle')) {
+                // Voltar para animação padrão
+                window.CharacterAnimations.play(jogador, 'idle', direcao);
+            }
+            
+            // Atualizar o sistema de animação
+            window.CharacterAnimations.update(jogador, 1/60);
+        }
         
-        // Cores base do personagem
-        const corPele = '#FFD1B7'; // Cor da pele mais realista
-        const corRoupa = jogador.vida > 50 ? 
-            `rgb(${30 + pulsacao * 20}, ${100 + pulsacao * 30}, ${190 + pulsacao * 35})` : 
-            `rgb(${150 + pulsacao * 30}, ${40 + pulsacao * 20}, ${40 + pulsacao * 20})`;
-        const corCabelo = '#8B4513'; // Marrom
+        // Verificar se o sistema de renderização avançada está disponível
+        if (window.RenderizacaoJogador && typeof window.RenderizacaoJogador.renderizar === 'function') {
+            // Usar renderização avançada
+            window.RenderizacaoJogador.renderizar(ctx, jogador);
+        } else {
+            // Fallback para renderização básica
+            
+            // Sombra do personagem (melhorada, oval)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 8, 6, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
         
-        // Offsets de braços e pernas
-        const bracoOffset = jogador.animacao.andando ? 
-            Math.sin(jogador.animacao.frame * Math.PI / 2) * 1.5 : 0;
-        const pernaOffset = jogador.animacao.andando ? 
-            Math.sin(jogador.animacao.frame * Math.PI / 2) * 2 : 0;
+            // Obter offsets da animação
+            const frameOffset = Math.sin(jogador.animacao.frame * Math.PI / 2) * 0.5;
+            const bobbing = jogador.animacao.andando ? Math.sin(jogador.animacao.frame * Math.PI) * 0.7 : 0;
+            
+            // Cores base do personagem
+            const corPele = '#FFD1B7'; // Cor da pele mais realista
+            const corRoupa = jogador.vida > 50 ? 
+                `rgb(${30 + pulsacao * 20}, ${100 + pulsacao * 30}, ${190 + pulsacao * 35})` : 
+                `rgb(${150 + pulsacao * 30}, ${40 + pulsacao * 20}, ${40 + pulsacao * 20})`;
+            const corCabelo = '#8B4513'; // Marrom
+            
+            // Offsets de braços e pernas
+            const bracoOffset = jogador.animacao.andando ? 
+                Math.sin(jogador.animacao.frame * Math.PI / 2) * 1.5 : 0;
+            const pernaOffset = jogador.animacao.andando ? 
+                Math.sin(jogador.animacao.frame * Math.PI / 2) * 2 : 0;
         
         // Pernas (por baixo de tudo)
         // Perna esquerda
@@ -1029,78 +1182,208 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillRect(-1, 0, 2, 5); // Manga da camisa
         ctx.fillStyle = corPele;
         ctx.fillRect(-1, 4, 2, 2); // Mão
-        ctx.restore();
-        
-        // Braço direito
-        ctx.save();
-        ctx.translate(x + 3, y + bobbing);
-        
-        // Rotação oposta para o outro braço
-        if (direcao === 'left' || direcao === 'right') {
-            rotacao = direcao === 'right' ? -Math.PI/6 : Math.PI/6;
-            rotacao -= bracoOffset * 0.5;
-        } else {
-            rotacao = -bracoOffset * 0.4;
-        }
-        
-        ctx.rotate(rotacao);
-        ctx.fillStyle = corRoupa;
-        ctx.fillRect(-1, 0, 2, 5); // Manga da camisa
-        ctx.fillStyle = corPele;
-        ctx.fillRect(-1, 4, 2, 2); // Mão
-        ctx.restore();
-        
-        // Cabeça e rosto
-        ctx.fillStyle = corPele;
-        ctx.fillRect(x - 3, y - 8 + bobbing, 6, 7); // Cabeça um pouco maior e mais oval
-        
-        // Cabelo baseado na direção
-        ctx.fillStyle = corCabelo;
-        if (direcao === 'back' || direcao === 'up') {
-            // Parte de trás do cabelo (visível de costas)
-            ctx.fillRect(x - 3, y - 8 + bobbing, 6, 2);
-            ctx.fillRect(x - 4, y - 6 + bobbing, 8, 2);
-        } else {
-            // Frente e lados
-            ctx.fillRect(x - 3, y - 9 + bobbing, 6, 2); // Franja
-            ctx.fillRect(x - 4, y - 7 + bobbing, 1, 4); // Lado esquerdo
-            ctx.fillRect(x + 3, y - 7 + bobbing, 1, 4); // Lado direito
-        }
-        
-        // Detalhes do rosto baseados na direção
-        if (direcao !== 'back' && direcao !== 'up') {
-            // Olhos (com expressão baseada na vida/sanidade)
-            const expressaoOlhos = jogador.vida < 30 ? 'x' : 
-                              jogador.sanidade < 30 ? 'o' : 
-                              '.';
-                              
-            // Cor dos olhos
-            const corOlhos = jogador.vida > 30 ? '#0066ff' : '#ff0000';
+            ctx.restore();
             
-            if (expressaoOlhos === '.') {
-                // Olhos normais
-                if (direcao === 'left') {
-                    // Olhando para a esquerda
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(x - 3, y - 5 + bobbing, 2, 2);
-                    ctx.fillStyle = corOlhos;
-                    ctx.fillRect(x - 3, y - 5 + bobbing, 1, 1);
-                } else if (direcao === 'right') {
-                    // Olhando para a direita
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(x + 1, y - 5 + bobbing, 2, 2);
-                    ctx.fillStyle = corOlhos;
-                    ctx.fillRect(x + 2, y - 5 + bobbing, 1, 1);
+            // Braço direito
+            ctx.save();
+            ctx.translate(x + 3, y + bobbing);
+            
+            // Rotação oposta para o outro braço
+            if (direcao === 'left' || direcao === 'right') {
+                rotacao = direcao === 'right' ? -Math.PI/6 : Math.PI/6;
+                rotacao -= bracoOffset * 0.5;
+            } else {
+                rotacao = -bracoOffset * 0.4;
+            }
+            
+            ctx.rotate(rotacao);
+            ctx.fillStyle = corRoupa;
+            ctx.fillRect(-1, 0, 2, 5); // Manga da camisa
+            ctx.fillStyle = corPele;
+            ctx.fillRect(-1, 4, 2, 2); // Mão
+            ctx.restore();
+            
+            // Cabeça e rosto
+            ctx.fillStyle = corPele;
+            ctx.fillRect(x - 3, y - 8 + bobbing, 6, 7); // Cabeça um pouco maior e mais oval
+            
+            // Cabelo baseado na direção
+            ctx.fillStyle = corCabelo;
+            if (direcao === 'back' || direcao === 'up') {
+                // Parte de trás do cabelo (visível de costas)
+                ctx.fillRect(x - 3, y - 8 + bobbing, 6, 2);
+                ctx.fillRect(x - 4, y - 6 + bobbing, 8, 2);
+            } else {
+                // Frente e lados
+                ctx.fillRect(x - 3, y - 9 + bobbing, 6, 2); // Franja
+                ctx.fillRect(x - 4, y - 7 + bobbing, 1, 4); // Lado esquerdo
+                ctx.fillRect(x + 3, y - 7 + bobbing, 1, 4); // Lado direito
+            }
+            
+            // Detalhes do rosto baseados na direção
+            if (direcao !== 'back' && direcao !== 'up') {
+                // Olhos (com expressão baseada na vida/sanidade)
+                const expressaoOlhos = jogador.vida < 30 ? 'x' : 
+                                jogador.sanidade < 30 ? 'o' : 
+                                '.';
+                                
+                // Cor dos olhos
+                const corOlhos = jogador.vida > 30 ? '#0066ff' : '#ff0000';
+                
+                if (expressaoOlhos === '.') {
+                    // Olhos normais
+                    if (direcao === 'left') {
+                        // Olhando para a esquerda
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(x - 3, y - 5 + bobbing, 2, 2);
+                        ctx.fillStyle = corOlhos;
+                        ctx.fillRect(x - 3, y - 5 + bobbing, 1, 1);
+                    } else if (direcao === 'right') {
+                        // Olhando para a direita
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(x + 1, y - 5 + bobbing, 2, 2);
+                        ctx.fillStyle = corOlhos;
+                        ctx.fillRect(x + 2, y - 5 + bobbing, 1, 1);
+                    } else {
+                        // Olhando para frente
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(x - 2, y - 5 + bobbing, 2, 2);
+                        ctx.fillRect(x, y - 5 + bobbing, 2, 2);
+                        
+                        ctx.fillStyle = corOlhos;
+                        ctx.fillRect(x - 1, y - 5 + bobbing, 1, 1);
+                        ctx.fillRect(x + 1, y - 5 + bobbing, 1, 1);
+                    }
+                } else if (expressaoOlhos === 'x') {
+                    // Olhos de dor (X)
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 2, y - 6 + bobbing);
+                    ctx.lineTo(x - 1, y - 5 + bobbing);
+                    ctx.moveTo(x - 1, y - 6 + bobbing);
+                    ctx.lineTo(x - 2, y - 5 + bobbing);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x + 1, y - 6 + bobbing);
+                    ctx.lineTo(x + 2, y - 5 + bobbing);
+                    ctx.moveTo(x + 2, y - 6 + bobbing);
+                    ctx.lineTo(x + 1, y - 5 + bobbing);
+                    ctx.stroke();
                 } else {
-                    // Olhando para frente
+                    // Olhos arregalados de medo/loucura
                     ctx.fillStyle = 'white';
                     ctx.fillRect(x - 2, y - 5 + bobbing, 2, 2);
                     ctx.fillRect(x, y - 5 + bobbing, 2, 2);
                     
-                    ctx.fillStyle = corOlhos;
-                    ctx.fillRect(x - 1, y - 5 + bobbing, 1, 1);
-                    ctx.fillRect(x + 1, y - 5 + bobbing, 1, 1);
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.beginPath();
+                    ctx.arc(x - 1, y - 4 + bobbing, 1, 0, Math.PI * 2);
+                    ctx.arc(x + 1, y - 4 + bobbing, 1, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Pequenas linhas erráticas ao redor dos olhos
+                    ctx.strokeStyle = '#800080';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 3, y - 6 + bobbing);
+                    ctx.lineTo(x - 2, y - 5 + bobbing);
+                    ctx.moveTo(x + 3, y - 6 + bobbing);
+                    ctx.lineTo(x + 2, y - 5 + bobbing);
+                    ctx.stroke();
                 }
+                
+                // Boca (expressão baseada na vida/sanidade)
+                if (jogador.vida < 30) {
+                    // Expressão de dor
+                    ctx.fillStyle = '#ff3333';
+                    ctx.fillRect(x - 1, y - 2 + bobbing, 2, 1);
+                } else if (jogador.sanidade < 30) {
+                    // Expressão de medo/loucura
+                    ctx.strokeStyle = '#333333';
+                    ctx.beginPath();
+                    ctx.arc(x, y - 2 + bobbing, 1, 0, Math.PI, false);
+                    ctx.stroke();
+                } else {
+                    // Expressão neutra
+                    ctx.fillStyle = '#cc6666';
+                    ctx.fillRect(x - 1, y - 2 + bobbing, 2, 1);
+                }
+            }
+            
+            // Equipamento/armadura (detalhes)
+            if (ambiente === 'quintal') {
+                // Pequena mochila nas costas para o ambiente externo
+                ctx.fillStyle = '#553300';
+                if (direcao === 'up' || direcao === 'back') {
+                    // Visível de costas
+                    ctx.fillRect(x - 2, y + bobbing, 4, 3);
+                } else {
+                    // Alças visíveis de frente/lado
+                    ctx.fillRect(x - 3, y - 2 + bobbing, 1, 3);
+                    ctx.fillRect(x + 2, y - 2 + bobbing, 1, 3);
+                }
+            }
+            
+            // Efeitos especiais
+            // Efeito de aura quando a vida está baixa
+            if (jogador.vida < 30) {
+                const auraSize = 3 + Math.sin(tick * 0.3) * 1;
+                ctx.strokeStyle = `rgba(255, 0, 0, ${0.6 + pulsacao * 0.4})`;
+                ctx.lineWidth = 1.5;
+                
+                // Aura pulsante
+                ctx.beginPath();
+                ctx.arc(x, y, 12 + auraSize, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Traços de sangue
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillRect(x - 2, y + 7 + bobbing, 1, 1);
+                ctx.fillRect(x + 1, y + 6 + bobbing, 1, 2);
+            }
+            
+            // Efeito mágico quando sanidade baixa
+            if (jogador.sanidade < 30) {
+                // Partículas mágicas mais estilizadas
+                for (let i = 0; i < 12; i++) {
+                    const angle = (tick * 0.05 + i * Math.PI / 6) % (Math.PI * 2);
+                    const radius = 12 + Math.sin(tick * 0.1 + i) * 4;
+                    const px = x + Math.cos(angle) * radius;
+                    const py = y + Math.sin(angle) * radius;
+                    
+                    const tamanhoParticula = 1 + Math.random();
+                    
+                    ctx.fillStyle = `rgba(255, 0, 255, ${0.7 + Math.sin(tick * 0.2 + i) * 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, tamanhoParticula/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Distorção visual mais sutil
+                ctx.fillStyle = `rgba(255, 0, 255, ${0.1 * Math.sin(tick * 0.2)})`;
+                ctx.fillRect(0, 0, BASE_W, BASE_H);
+                
+                // Efeito de vinheta que pulsa com a insanidade
+                const gradientVinheta = ctx.createRadialGradient(x, y, 20, x, y, 80);
+                gradientVinheta.addColorStop(0, 'rgba(0,0,0,0)');
+                gradientVinheta.addColorStop(0.7, `rgba(100,0,100,${0.1 + Math.sin(tick * 0.05) * 0.05})`);
+                gradientVinheta.addColorStop(1, `rgba(100,0,100,${0.2 + Math.sin(tick * 0.05) * 0.1})`);
+                ctx.fillStyle = gradientVinheta;
+                ctx.fillRect(0, 0, BASE_W, BASE_H);
+            }
+        }
+        
+        // Aplicar efeitos visuais se disponíveis
+        if (window.EfeitosVisuais) {
+            // Adicionar efeitos baseados no estado do jogador
+            if (jogador.vida < 30 && Math.random() > 0.9) {
+                window.EfeitosVisuais.criarSangue(x, y, 2, 1);
+            }
+            
+            if (jogador.sanidade < 30 && Math.random() > 0.95) {
+                window.EfeitosVisuais.criarFlash('rgba(255, 0, 255, 0.1)', 200, 0.1);
+            }
+        }
             } else if (expressaoOlhos === 'o') {
                 // Olhos arregalados (baixa sanidade)
                 ctx.fillStyle = 'white';
@@ -1724,7 +2007,73 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ataque básico
             case ' ':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
+                    // Verificar cooldown
+                    const agora = Date.now();
+                    if (agora - ultimoAtaque < 500) {
+                        break; // Ainda em cooldown
+                    }
+                    
+                    ultimoAtaque = agora;
                     playSoundEffect('attack');
+                    
+                    // Definir tipo de ataque baseado nas teclas numéricas pressionadas
+                    if (tecla1) {
+                        tipoAtaque = 'rapido';
+                    } else if (tecla2) {
+                        tipoAtaque = 'medio';
+                    } else if (tecla3) {
+                        tipoAtaque = 'forte';
+                    } else {
+                        tipoAtaque = 'rapido'; // Ataque padrão
+                    }
+                    
+                    // Configurar dano baseado no tipo de ataque
+                    let dano = 10; // Dano base para ataque rápido
+                    let alcance = 15; // Alcance base para ataque rápido
+                    
+                    if (tipoAtaque === 'medio') {
+                        dano = 20;
+                        alcance = 20;
+                    } else if (tipoAtaque === 'forte') {
+                        dano = 35;
+                        alcance = 25;
+                    }
+                    
+                    // Sinalizar que o jogador está atacando (para animação)
+                    atacando = true;
+                    
+                    // Aplicar efeitos visuais se disponíveis
+                    if (window.EfeitosVisuais) {
+                        if (tipoAtaque === 'rapido') {
+                            window.EfeitosVisuais.criarRastroArma(
+                                jogador.posicao.x, 
+                                jogador.posicao.y, 
+                                jogador.animacao.direcao, 
+                                '#FFE0A3', 
+                                1.2
+                            );
+                        } else if (tipoAtaque === 'medio') {
+                            window.EfeitosVisuais.criarRastroArma(
+                                jogador.posicao.x, 
+                                jogador.posicao.y, 
+                                jogador.animacao.direcao, 
+                                '#FFA500', 
+                                1.5
+                            );
+                            window.EfeitosVisuais.criarTremor(0.2, 200);
+                        } else if (tipoAtaque === 'forte') {
+                            window.EfeitosVisuais.criarRastroArma(
+                                jogador.posicao.x, 
+                                jogador.posicao.y, 
+                                jogador.animacao.direcao, 
+                                '#FF2A00', 
+                                2
+                            );
+                            window.EfeitosVisuais.criarTremor(0.4, 300);
+                            window.EfeitosVisuais.criarFlash('rgba(255, 40, 0, 0.1)', 200, 0.3);
+                        }
+                    }
+                    
                     // Atacar inimigos próximos
                     for (let i = inimigosAtivos.length - 1; i >= 0; i--) {
                         const inimigo = inimigosAtivos[i];
@@ -1732,20 +2081,74 @@ document.addEventListener('DOMContentLoaded', function() {
                         const distY = Math.abs(jogador.posicao.y - inimigo.posicao.y);
                         const distancia = Math.sqrt(distX * distX + distY * distY);
                         
-                        if (distancia < 20) {
-                            inimigo.vida -= 25;
-                            console.log(`Atacou ${inimigo.nome}! Vida restante: ${inimigo.vida}`);
+                        // Verificar se o inimigo está no alcance do ataque
+                        if (distancia < alcance) {
+                            inimigo.vida -= dano;
+                            inimigo.ultimoAtaque = Date.now();
+                            inimigo.danoRecebido = dano;
+                            console.log(`Atacou ${inimigo.nome} com ataque ${tipoAtaque}! Vida restante: ${inimigo.vida}`);
                             
-                            // Empurrar inimigo para trás
+                            // Empurrar inimigo para trás (knockback mais forte para ataques mais fortes)
                             const dirX = (inimigo.posicao.x - jogador.posicao.x) / distancia;
                             const dirY = (inimigo.posicao.y - jogador.posicao.y) / distancia;
-                            inimigo.posicao.x += dirX * 15;
-                            inimigo.posicao.y += dirY * 15;
+                            
+                            let knockbackForce = 10; // Força base
+                            if (tipoAtaque === 'medio') knockbackForce = 15;
+                            if (tipoAtaque === 'forte') knockbackForce = 20;
+                            
+                            inimigo.posicao.x += dirX * knockbackForce;
+                            inimigo.posicao.y += dirY * knockbackForce;
+                            
+                            // Efeitos visuais quando atinge o inimigo
+                            if (window.EfeitosVisuais) {
+                                // Criar partículas de impacto
+                                window.EfeitosVisuais.criarExplosao(
+                                    inimigo.posicao.x, 
+                                    inimigo.posicao.y, 
+                                    tipoAtaque === 'rapido' ? '#FFE0A3' : 
+                                    tipoAtaque === 'medio' ? '#FFA500' : '#FF2A00',
+                                    tipoAtaque === 'rapido' ? 5 : 
+                                    tipoAtaque === 'medio' ? 10 : 15,
+                                    2, 
+                                    500
+                                );
+                                
+                                // Criar efeito de sangue
+                                window.EfeitosVisuais.criarSangue(
+                                    inimigo.posicao.x, 
+                                    inimigo.posicao.y, 
+                                    tipoAtaque === 'rapido' ? 5 : 
+                                    tipoAtaque === 'medio' ? 10 : 15
+                                );
+                            }
+                            
                             break;
                         }
                     }
                 }
                 e.preventDefault();
+                break;
+                
+            // Teclas de seleção de ataque
+            case '1':
+                tecla1 = true;
+                tecla2 = false;
+                tecla3 = false;
+                tipoAtaque = 'rapido';
+                break;
+                
+            case '2':
+                tecla1 = false;
+                tecla2 = true;
+                tecla3 = false;
+                tipoAtaque = 'medio';
+                break;
+                
+            case '3':
+                tecla1 = false;
+                tecla2 = false;
+                tecla3 = true;
+                tipoAtaque = 'forte';
                 break;
                 
             // Tecla E para transição entre ambientes
@@ -1825,6 +2228,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'D':
                     jogador.animacao.andando = false;
                     jogador.animacao.frame = 0;
+                    break;
+                    
+                case 'e':
+                case 'E':
+                    teclaE = false;
+                    break;
+                    
+                case '1':
+                    tecla1 = false;
+                    break;
+                    
+                case '2':
+                    tecla2 = false;
+                    break;
+                    
+                case '3':
+                    tecla3 = false;
                     break;
             }
         }
