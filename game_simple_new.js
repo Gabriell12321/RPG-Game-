@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let tick = 0;
     let menuState = 'main';
     let gameState = 'menu'; // menu, game, options, credits, quit
-    let ambiente = 'casa'; // casa, quintal
+    let ambiente = 'casa'; // casa, quintal, mundo
     
     // Sistema de personagens
     let gerenciadorPersonagens = null;
@@ -56,6 +56,10 @@ document.addEventListener('DOMContentLoaded', function() {
             andando: false,
             tempoFrame: 0
         },
+        // Propriedades para efeitos visuais
+        ultimoDano: 0,
+        ultimoAtaque: 0,
+        ultimaCura: 0,
         // Propriedades de aparência
         aparencia: {
             corCabelo: '#8B4513', // Marrom
@@ -101,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mensagens para diferentes estados
     const stateMessages = {
-        game: "INICIANDO PESADELO...\n\nVocê acorda em um quarto escuro.\nUm trovão ilumina brevemente o ambiente.\nA porta está entreaberta. Algo se move nas sombras...\n\nUse WASD para mover\nESPAÇO para atacar\nE para alternar entre casa e quintal\nESC para menu",
+        game: "INICIANDO PESADELO...\n\nVocê acorda em um quarto escuro.\nUm trovão ilumina brevemente o ambiente.\nA porta está entreaberta. Algo se move nas sombras...\n\nUse WASD para mover\nESPAÇO para atacar\n1,2,3 para tipos de ataque\nE para navegar entre ambientes\n(Casa → Quintal → Mundo Aberto)\nESC para menu",
         options: "OPÇÕES\n\nUse as setas para navegar\nPressione ESC para voltar",
         credits: "SEGREDOS OCULTOS\n\nEste jogo foi desenvolvido por Gabriell12321\n\nAlguns segredos estão escondidos nas sombras...\nNem tudo é o que parece...\n\nPressione ESC para voltar",
         quit: "VOCÊ TENTA FUGIR...\n\n...mas o pesadelo sempre volta.\n\nNão há escapatória."
@@ -234,22 +238,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Música de fundo ambiente
     function startBackgroundMusic() {
-        if (!audioContext || !audioConfig.musicEnabled || backgroundMusicOscillator) return;
+        console.log('Tentando iniciar música de fundo...', {
+            audioContext: !!audioContext,
+            musicEnabled: audioConfig.musicEnabled,
+            oscillatorExists: !!backgroundMusicOscillator
+        });
         
-        // Tom baixo e sombrio para música ambiente
-        backgroundMusicOscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        if (!audioContext || !audioConfig.musicEnabled || backgroundMusicOscillator) {
+            console.log('Música não iniciada devido a condições:', {
+                noAudioContext: !audioContext,
+                musicDisabled: !audioConfig.musicEnabled,
+                oscillatorAlreadyExists: !!backgroundMusicOscillator
+            });
+            return;
+        }
         
-        backgroundMusicOscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        backgroundMusicOscillator.frequency.value = 55; // Nota A baixa
-        backgroundMusicOscillator.type = 'triangle';
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(audioConfig.musicVolume * 0.1, audioContext.currentTime + 2);
-        
-        backgroundMusicOscillator.start();
+        try {
+            // Tom baixo e sombrio para música ambiente
+            backgroundMusicOscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            backgroundMusicOscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            backgroundMusicOscillator.frequency.value = 55; // Nota A baixa
+            backgroundMusicOscillator.type = 'triangle';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(audioConfig.musicVolume * 0.1, audioContext.currentTime + 2);
+            
+            backgroundMusicOscillator.start();
+            console.log('Música de fundo iniciada com sucesso!');
+        } catch (error) {
+            console.error('Erro ao iniciar música de fundo:', error);
+        }
     }
     
     // Parar música de fundo
@@ -313,6 +335,8 @@ document.addEventListener('DOMContentLoaded', function() {
             drawCasaInterior(ctx, t);
         } else if (ambiente === 'quintal') {
             drawQuintal(ctx, t);
+        } else if (ambiente === 'mundo') {
+            drawMundoAberto(ctx, t);
         }
     }
     
@@ -673,6 +697,253 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.font = '8px monospace';
             ctx.fillText("Pressione E para entrar", BASE_W/2 - 45, 105);
         }
+        
+        // Interação - Texto indicando saída para o mundo aberto
+        if(jogador.posicao.y > BASE_H - 20) {
+            ctx.fillStyle = 'yellow';
+            ctx.font = '8px monospace';
+            ctx.fillText("Pressione E para explorar o mundo", BASE_W/2 - 70, BASE_H - 5);
+        }
+    }
+    
+    // Sistema de mundo aberto procedural
+    let mundoOffset = { x: 0, y: 0 };
+    let chunkSize = 320; // Tamanho de cada chunk
+    let worldSeed = 12345; // Seed para geração procedural
+    
+    // Função para gerar número pseudo-aleatório baseado em seed
+    function seededRandom(seed) {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+    }
+    
+    // Desenhar o mundo aberto infinito
+    function drawMundoAberto(ctx, t) {
+        // Calcular chunk atual baseado na posição do mundo
+        const chunkX = Math.floor(mundoOffset.x / chunkSize);
+        const chunkY = Math.floor(mundoOffset.y / chunkSize);
+        
+        // Renderizar 9 chunks (3x3) ao redor do jogador
+        for(let dx = -1; dx <= 1; dx++) {
+            for(let dy = -1; dy <= 1; dy++) {
+                drawChunk(ctx, chunkX + dx, chunkY + dy, t);
+            }
+        }
+        
+        // HUD do mundo aberto
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(5, BASE_H - 25, 200, 20);
+        ctx.fillStyle = 'white';
+        ctx.font = '8px monospace';
+        ctx.fillText(`Mundo: X:${Math.floor(mundoOffset.x/10)} Y:${Math.floor(mundoOffset.y/10)}`, 8, BASE_H - 15);
+        ctx.fillText(`Chunk: ${chunkX}, ${chunkY}`, 8, BASE_H - 7);
+        
+        // Indicação para voltar
+        if(jogador.posicao.y < 20) {
+            ctx.fillStyle = 'yellow';
+            ctx.font = '8px monospace';
+            ctx.fillText("Pressione E para voltar ao quintal", BASE_W/2 - 70, 15);
+        }
+    }
+    
+    // Desenhar um chunk específico do mundo
+    function drawChunk(ctx, chunkX, chunkY, t) {
+        const baseX = chunkX * chunkSize - mundoOffset.x;
+        const baseY = chunkY * chunkSize - mundoOffset.y;
+        
+        // Se o chunk não está visível, não renderizar
+        if(baseX > BASE_W || baseY > BASE_H || baseX + chunkSize < 0 || baseY + chunkSize < 0) {
+            return;
+        }
+        
+        // Seed único para este chunk
+        const chunkSeed = worldSeed + chunkX * 1000 + chunkY;
+        
+        // Tipo de bioma baseado na posição
+        const biomeType = getBiomeType(chunkX, chunkY);
+        
+        // Desenhar terreno base
+        drawChunkTerrain(ctx, baseX, baseY, chunkSeed, biomeType, t);
+        
+        // Gerar e desenhar recursos naturais
+        drawChunkFeatures(ctx, baseX, baseY, chunkSeed, biomeType, t);
+    }
+    
+    // Determinar tipo de bioma
+    function getBiomeType(chunkX, chunkY) {
+        const noise1 = seededRandom(chunkX * 73 + chunkY * 37);
+        const noise2 = seededRandom(chunkX * 113 + chunkY * 89);
+        
+        if(noise1 < 0.3) return 'floresta';
+        if(noise1 < 0.6) return 'planicie';
+        if(noise1 < 0.8) return 'colinas';
+        return 'pantano';
+    }
+    
+    // Desenhar terreno do chunk
+    function drawChunkTerrain(ctx, baseX, baseY, seed, biome, t) {
+        const colors = {
+            floresta: '#0a2a0a',
+            planicie: '#1a3a1a', 
+            colinas: '#2a2a1a',
+            pantano: '#1a1a2a'
+        };
+        
+        // Fundo base
+        ctx.fillStyle = colors[biome] || '#1a1a1a';
+        ctx.fillRect(baseX, baseY, chunkSize, chunkSize);
+        
+        // Textura procedural
+        for(let i = 0; i < 100; i++) {
+            const x = baseX + seededRandom(seed + i * 17) * chunkSize;
+            const y = baseY + seededRandom(seed + i * 23) * chunkSize;
+            
+            // Só desenhar se estiver na tela
+            if(x >= -10 && x <= BASE_W + 10 && y >= -10 && y <= BASE_H + 10) {
+                const size = 1 + seededRandom(seed + i * 31) * 3;
+                const alpha = 0.3 + seededRandom(seed + i * 41) * 0.4;
+                
+                if(biome === 'floresta') {
+                    ctx.fillStyle = `rgba(0, ${100 + Math.floor(seededRandom(seed + i) * 50)}, 0, ${alpha})`;
+                } else if(biome === 'planicie') {
+                    ctx.fillStyle = `rgba(0, ${120 + Math.floor(seededRandom(seed + i) * 60)}, 20, ${alpha})`;
+                } else if(biome === 'colinas') {
+                    ctx.fillStyle = `rgba(${100 + Math.floor(seededRandom(seed + i) * 50)}, ${100 + Math.floor(seededRandom(seed + i) * 50)}, 0, ${alpha})`;
+                } else {
+                    ctx.fillStyle = `rgba(50, 50, ${100 + Math.floor(seededRandom(seed + i) * 50)}, ${alpha})`;
+                }
+                
+                ctx.fillRect(x, y, size, size);
+            }
+        }
+    }
+    
+    // Desenhar características do chunk (árvores, rochas, etc)
+    function drawChunkFeatures(ctx, baseX, baseY, seed, biome, t) {
+        const featureCount = biome === 'floresta' ? 15 : biome === 'planicie' ? 8 : 12;
+        
+        for(let i = 0; i < featureCount; i++) {
+            const x = baseX + seededRandom(seed + i * 97) * chunkSize;
+            const y = baseY + seededRandom(seed + i * 71) * chunkSize;
+            
+            // Só desenhar se estiver na tela
+            if(x >= -30 && x <= BASE_W + 30 && y >= -30 && y <= BASE_H + 30) {
+                const featureType = seededRandom(seed + i * 53);
+                
+                if(biome === 'floresta') {
+                    if(featureType < 0.7) {
+                        drawTree(ctx, x, y, seed + i);
+                    } else {
+                        drawBush(ctx, x, y, seed + i);
+                    }
+                } else if(biome === 'planicie') {
+                    if(featureType < 0.5) {
+                        drawGrass(ctx, x, y, seed + i);
+                    } else if(featureType < 0.8) {
+                        drawFlower(ctx, x, y, seed + i);
+                    } else {
+                        drawRock(ctx, x, y, seed + i);
+                    }
+                } else if(biome === 'colinas') {
+                    if(featureType < 0.6) {
+                        drawRock(ctx, x, y, seed + i);
+                    } else {
+                        drawTree(ctx, x, y, seed + i);
+                    }
+                } else { // pantano
+                    if(featureType < 0.4) {
+                        drawSwampTree(ctx, x, y, seed + i);
+                    } else if(featureType < 0.7) {
+                        drawWater(ctx, x, y, seed + i);
+                    } else {
+                        drawMushroom(ctx, x, y, seed + i);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Funções para desenhar diferentes características
+    function drawTree(ctx, x, y, seed) {
+        const height = 15 + seededRandom(seed) * 10;
+        const width = 3 + seededRandom(seed + 1) * 2;
+        
+        // Tronco
+        ctx.fillStyle = '#4a3225';
+        ctx.fillRect(x - width/2, y - height, width, height);
+        
+        // Copa
+        const leafSize = 8 + seededRandom(seed + 2) * 6;
+        ctx.fillStyle = '#2a5a2a';
+        ctx.beginPath();
+        ctx.arc(x, y - height, leafSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawBush(ctx, x, y, seed) {
+        const size = 4 + seededRandom(seed) * 4;
+        ctx.fillStyle = '#1a4a1a';
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawGrass(ctx, x, y, seed) {
+        const height = 2 + seededRandom(seed) * 3;
+        ctx.fillStyle = '#2a6a2a';
+        ctx.fillRect(x, y - height, 1, height);
+    }
+    
+    function drawFlower(ctx, x, y, seed) {
+        const color = seededRandom(seed) < 0.5 ? '#ff6a6a' : '#6a6aff';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y - 2, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawRock(ctx, x, y, seed) {
+        const size = 3 + seededRandom(seed) * 4;
+        ctx.fillStyle = '#6a6a6a';
+        ctx.fillRect(x - size/2, y - size/2, size, size);
+    }
+    
+    function drawSwampTree(ctx, x, y, seed) {
+        const height = 12 + seededRandom(seed) * 8;
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(x - 2, y - height, 4, height);
+        
+        // Copa murcha
+        ctx.fillStyle = '#4a4a2a';
+        ctx.beginPath();
+        ctx.arc(x, y - height, 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawWater(ctx, x, y, seed) {
+        const size = 5 + seededRandom(seed) * 8;
+        ctx.fillStyle = '#2a2a6a';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size, size/2, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawMushroom(ctx, x, y, seed) {
+        // Haste
+        ctx.fillStyle = '#dac5a0';
+        ctx.fillRect(x - 1, y - 4, 2, 4);
+        
+        // Chapéu
+        const color = seededRandom(seed) < 0.5 ? '#ff4a4a' : '#4a4aff';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Pontos brancos
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x - 1, y - 5, 1, 1);
+        ctx.fillRect(x + 1, y - 4, 1, 1);
     }
     
     // Função para criar um inimigo
@@ -688,11 +959,12 @@ document.addEventListener('DOMContentLoaded', function() {
             vida: mob.vida,
             vidaMaxima: mob.vida,
             dano: mob.dano,
+            ultimoDano: 0,      // Momento do último dano recebido
+            ultimoAtaque: 0,    // Momento do último ataque ao jogador
             velocidade: mob.velocidade,
             cor: mob.cor,
             tamanho: mob.tamanho,
             alerta: false,
-            ultimoAtaque: 0,
             direcao: Math.random() * Math.PI * 2,
             danoRecebido: 0  // Valor do último dano recebido
         };
@@ -784,6 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     jogador.vida -= inimigo.dano;
                     jogador.sanidade -= 5;
                     inimigo.ultimoAtaque = Date.now();
+                    jogador.ultimoDano = Date.now();
                     playSoundEffect('damage');
                     
                     // Empurrar o jogador para trás
@@ -838,8 +1111,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const vidaPercent = inimigo.vida / inimigo.vidaMaxima;
             
             // Verificar se o inimigo foi atingido recentemente
-            const tempoDesdeUltimoAtaque = Date.now() - inimigo.ultimoAtaque;
-            const foiAtingido = tempoDesdeUltimoAtaque < 500;
+            const tempoDesdeUltimoDano = Date.now() - (inimigo.ultimoDano || 0);
+            const foiAtingido = tempoDesdeUltimoDano < 500;
             
             // Sombra do inimigo
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -850,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Efeito de pulsação quando atingido
             let escala = 1;
             if (foiAtingido) {
-                escala = 1 + Math.sin(tempoDesdeUltimoAtaque * 0.05) * 0.2;
+                escala = 1 + Math.sin(tempoDesdeUltimoDano * 0.05) * 0.2;
             }
             
             // Salvar o contexto para aplicar transformações
@@ -910,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (foiAtingido) {
                     // Forma distorcida quando atingido
-                    const distorcao = tempoDesdeUltimoAtaque / 500; // 0-1
+                    const distorcao = tempoDesdeUltimoDano / 500; // 0-1
                     for (let i = 0; i < 12; i++) {
                         const angulo = i * Math.PI / 6;
                         const raio = inimigo.tamanho/2 * (0.8 + Math.sin(angulo * 3 + tick * 0.1) * 0.3 * (1-distorcao));
@@ -981,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Exibir dano quando atingido
             if (foiAtingido) {
                 // Texto de dano que sobe
-                const progress = tempoDesdeUltimoAtaque / 500; // 0-1
+                const progress = tempoDesdeUltimoDano / 500; // 0-1
                 ctx.fillStyle = 'red';
                 ctx.font = '8px Arial';
                 ctx.fillText('-' + Math.floor(inimigo.danoRecebido || 10), 
@@ -1009,41 +1282,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Barra de vida
                 ctx.fillStyle = vidaPercent > 0.5 ? 'lime' : vidaPercent > 0.25 ? 'yellow' : 'red';
                 ctx.fillRect(x - barraLargura/2, y - inimigo.tamanho/2 - 5, barraLargura * vidaPercent, barraAltura);
-            }
-        }
-    }
-            
-            // Barra de vida melhorada
-            const vidaPct = inimigo.vida / inimigo.vidaMaxima;
-            if (vidaPct < 1) {
-                // Fundo da barra
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.fillRect(x - 10, y - 14, 20, 4);
-                
-                // Barra de vida com gradiente
-                const corVida = vidaPct > 0.7 ? 'green' : 
-                               vidaPct > 0.4 ? 'yellow' : 
-                               vidaPct > 0.2 ? 'orange' : 'red';
-                ctx.fillStyle = corVida;
-                ctx.fillRect(x - 9, y - 13, vidaPct * 18, 2);
-                
-                // Borda da barra
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(x - 10, y - 14, 20, 4);
-            }
-            
-            // Partículas ao redor dos inimigos
-            if (inimigo.alerta) {
-                for (let i = 0; i < 3; i++) {
-                    const px = x + (Math.random() - 0.5) * 15;
-                    const py = y + (Math.random() - 0.5) * 15;
-                    const cor = inimigo.tipo === 'sombra' ? 
-                        `rgba(80, 0, 80, ${Math.random() * 0.5})` :
-                        `rgba(200, 200, 255, ${Math.random() * 0.5})`;
-                    ctx.fillStyle = cor;
-                    ctx.fillRect(px, py, 1, 1);
-                }
             }
         }
     }
@@ -1383,116 +1621,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (jogador.sanidade < 30 && Math.random() > 0.95) {
                 window.EfeitosVisuais.criarFlash('rgba(255, 0, 255, 0.1)', 200, 0.1);
             }
-        }
-            } else if (expressaoOlhos === 'o') {
-                // Olhos arregalados (baixa sanidade)
-                ctx.fillStyle = 'white';
-                ctx.fillRect(x - 2, y - 5 + bobbing, 2, 2);
-                ctx.fillRect(x, y - 5 + bobbing, 2, 2);
-                
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(x - 1, y - 5 + bobbing, 1, 1);
-                ctx.fillRect(x + 1, y - 5 + bobbing, 1, 1);
-            } else {
-                // Olhos 'x' (vida baixa)
-                ctx.strokeStyle = '#ff0000';
-                ctx.lineWidth = 1;
-                
-                // Olho esquerdo 'x'
-                ctx.beginPath();
-                ctx.moveTo(x - 2, y - 5 + bobbing);
-                ctx.lineTo(x, y - 4 + bobbing);
-                ctx.moveTo(x - 2, y - 4 + bobbing);
-                ctx.lineTo(x, y - 5 + bobbing);
-                ctx.stroke();
-                
-                // Olho direito 'x'
-                ctx.beginPath();
-                ctx.moveTo(x + 0, y - 5 + bobbing);
-                ctx.lineTo(x + 2, y - 4 + bobbing);
-                ctx.moveTo(x + 0, y - 4 + bobbing);
-                ctx.lineTo(x + 2, y - 5 + bobbing);
-                ctx.stroke();
-            }
-            
-            // Boca (expressão baseada na vida/sanidade)
-            if (jogador.vida < 30) {
-                // Expressão de dor
-                ctx.fillStyle = '#ff3333';
-                ctx.fillRect(x - 1, y - 2 + bobbing, 2, 1);
-            } else if (jogador.sanidade < 30) {
-                // Expressão de medo/loucura
-                ctx.strokeStyle = '#333333';
-                ctx.beginPath();
-                ctx.arc(x, y - 2 + bobbing, 1, 0, Math.PI, false);
-                ctx.stroke();
-            } else {
-                // Expressão neutra
-                ctx.fillStyle = '#cc6666';
-                ctx.fillRect(x - 1, y - 2 + bobbing, 2, 1);
-            }
-        }
-        
-        // Equipamento/armadura (detalhes)
-        if (ambiente === 'quintal') {
-            // Pequena mochila nas costas para o ambiente externo
-            ctx.fillStyle = '#553300';
-            if (direcao === 'up' || direcao === 'back') {
-                // Visível de costas
-                ctx.fillRect(x - 2, y + bobbing, 4, 3);
-            } else {
-                // Alças visíveis de frente/lado
-                ctx.fillRect(x - 3, y - 2 + bobbing, 1, 3);
-                ctx.fillRect(x + 2, y - 2 + bobbing, 1, 3);
-            }
-        }
-        
-        // Efeitos especiais
-        // Efeito de aura quando a vida está baixa
-        if (jogador.vida < 30) {
-            const auraSize = 3 + Math.sin(tick * 0.3) * 1;
-            ctx.strokeStyle = `rgba(255, 0, 0, ${0.6 + pulsacao * 0.4})`;
-            ctx.lineWidth = 1.5;
-            
-            // Aura pulsante
-            ctx.beginPath();
-            ctx.arc(x, y, 12 + auraSize, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Traços de sangue
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
-            ctx.fillRect(x - 2, y + 7 + bobbing, 1, 1);
-            ctx.fillRect(x + 1, y + 6 + bobbing, 1, 2);
-        }
-        
-        // Efeito mágico quando sanidade baixa
-        if (jogador.sanidade < 30) {
-            // Partículas mágicas mais estilizadas
-            for (let i = 0; i < 12; i++) {
-                const angle = (tick * 0.05 + i * Math.PI / 6) % (Math.PI * 2);
-                const radius = 12 + Math.sin(tick * 0.1 + i) * 4;
-                const px = x + Math.cos(angle) * radius;
-                const py = y + Math.sin(angle) * radius;
-                
-                const tamanhoParticula = 1 + Math.random();
-                
-                ctx.fillStyle = `rgba(255, 0, 255, ${0.7 + Math.sin(tick * 0.2 + i) * 0.3})`;
-                ctx.beginPath();
-                ctx.arc(px, py, tamanhoParticula/2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Distorção visual mais sutil
-            ctx.fillStyle = `rgba(255, 0, 255, ${0.1 * Math.sin(tick * 0.2)})`;
-            ctx.fillRect(0, 0, BASE_W, BASE_H);
-            
-            // Efeito de vinheta que pulsa com a insanidade
-            const gradientVinheta = ctx.createRadialGradient(x, y, 20, x, y, 80);
-            gradientVinheta.addColorStop(0, 'rgba(0,0,0,0)');
-            gradientVinheta.addColorStop(0.7, `rgba(100,0,100,${0.1 + Math.sin(tick * 0.05) * 0.05})`);
-            gradientVinheta.addColorStop(1, `rgba(100,0,100,${0.2 + Math.sin(tick * 0.05) * 0.1})`);
-            ctx.fillStyle = gradientVinheta;
-            ctx.fillRect(0, 0, BASE_W, BASE_H);
         }
         
         // Pegadas mais realistas quando anda
@@ -1892,7 +2020,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             jogador.posicao.y = BASE_H / 2;
                             jogoInicializado = false;
                             ambiente = 'casa'; // Começar na casa
-                            startBackgroundMusic();
+                            
+                            // Garantir que o áudio seja inicializado antes de tocar música
+                            if (!audioInitialized) {
+                                initializeAudioOnFirstInteraction();
+                            }
+                            
+                            // Aguardar um pouco e iniciar a música
+                            setTimeout(() => {
+                                startBackgroundMusic();
+                            }, 100);
                             break;
                         case 1: // Opções
                             gameState = 'options';
@@ -1922,7 +2059,16 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'w':
             case 'W':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
-                    jogador.posicao.y = Math.max(jogador.sprite.height/2, jogador.posicao.y - jogador.velocidade);
+                    if (ambiente === 'mundo') {
+                        // No mundo aberto, mover o mundo ao invés do jogador nas bordas
+                        if (jogador.posicao.y > BASE_H / 2) {
+                            jogador.posicao.y = Math.max(jogador.sprite.height/2, jogador.posicao.y - jogador.velocidade);
+                        } else {
+                            mundoOffset.y -= jogador.velocidade;
+                        }
+                    } else {
+                        jogador.posicao.y = Math.max(jogador.sprite.height/2, jogador.posicao.y - jogador.velocidade);
+                    }
                     jogador.animacao.direcao = 'up';
                     jogador.animacao.andando = true;
                     
@@ -1943,7 +2089,16 @@ document.addEventListener('DOMContentLoaded', function() {
             case 's':
             case 'S':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
-                    jogador.posicao.y = Math.min(BASE_H - jogador.sprite.height/2, jogador.posicao.y + jogador.velocidade);
+                    if (ambiente === 'mundo') {
+                        // No mundo aberto, mover o mundo ao invés do jogador nas bordas
+                        if (jogador.posicao.y < BASE_H / 2) {
+                            jogador.posicao.y = Math.min(BASE_H - jogador.sprite.height/2, jogador.posicao.y + jogador.velocidade);
+                        } else {
+                            mundoOffset.y += jogador.velocidade;
+                        }
+                    } else {
+                        jogador.posicao.y = Math.min(BASE_H - jogador.sprite.height/2, jogador.posicao.y + jogador.velocidade);
+                    }
                     jogador.animacao.direcao = 'down';
                     jogador.animacao.andando = true;
                     
@@ -1964,7 +2119,16 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'a':
             case 'A':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
-                    jogador.posicao.x = Math.max(jogador.sprite.width/2, jogador.posicao.x - jogador.velocidade);
+                    if (ambiente === 'mundo') {
+                        // No mundo aberto, mover o mundo ao invés do jogador nas bordas
+                        if (jogador.posicao.x > BASE_W / 2) {
+                            jogador.posicao.x = Math.max(jogador.sprite.width/2, jogador.posicao.x - jogador.velocidade);
+                        } else {
+                            mundoOffset.x -= jogador.velocidade;
+                        }
+                    } else {
+                        jogador.posicao.x = Math.max(jogador.sprite.width/2, jogador.posicao.x - jogador.velocidade);
+                    }
                     jogador.animacao.direcao = 'left';
                     jogador.animacao.andando = true;
                     
@@ -1985,7 +2149,16 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'd':
             case 'D':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
-                    jogador.posicao.x = Math.min(BASE_W - jogador.sprite.width/2, jogador.posicao.x + jogador.velocidade);
+                    if (ambiente === 'mundo') {
+                        // No mundo aberto, mover o mundo ao invés do jogador nas bordas
+                        if (jogador.posicao.x < BASE_W / 2) {
+                            jogador.posicao.x = Math.min(BASE_W - jogador.sprite.width/2, jogador.posicao.x + jogador.velocidade);
+                        } else {
+                            mundoOffset.x += jogador.velocidade;
+                        }
+                    } else {
+                        jogador.posicao.x = Math.min(BASE_W - jogador.sprite.width/2, jogador.posicao.x + jogador.velocidade);
+                    }
                     jogador.animacao.direcao = 'right';
                     jogador.animacao.andando = true;
                     
@@ -2041,6 +2214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Sinalizar que o jogador está atacando (para animação)
                     atacando = true;
+                    jogador.ultimoAtaque = Date.now();
                     
                     // Aplicar efeitos visuais se disponíveis
                     if (window.EfeitosVisuais) {
@@ -2084,7 +2258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Verificar se o inimigo está no alcance do ataque
                         if (distancia < alcance) {
                             inimigo.vida -= dano;
-                            inimigo.ultimoAtaque = Date.now();
+                            inimigo.ultimoDano = Date.now(); // Registrar momento em que o inimigo recebeu dano
                             inimigo.danoRecebido = dano;
                             console.log(`Atacou ${inimigo.nome} com ataque ${tipoAtaque}! Vida restante: ${inimigo.vida}`);
                             
@@ -2155,18 +2329,15 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'e':
             case 'E':
                 if (gameState === 'game' && jogador.vida > 0 && jogador.sanidade > 0) {
-                    // Trocar de ambiente (casa <-> quintal)
                     if (ambiente === 'casa') {
+                        // Da casa para o quintal
                         console.log('Iniciando transição para o quintal...');
                         ambiente = 'quintal';
-                        // Reposicionar jogador
                         jogador.posicao.x = BASE_W / 2;
                         jogador.posicao.y = BASE_H - 40;
-                        // Gerar novos inimigos para o novo ambiente
                         spawnarInimigos(ambiente);
-                        playSoundEffect('menuSelect'); // Som de porta
+                        playSoundEffect('menuSelect');
                         
-                        // Sussurro ao entrar no quintal
                         const mensagensQuintal = [
                             "O ar lá fora está pesado... algo te observa nas sombras...",
                             "Você não deveria ter saído da casa...",
@@ -2174,38 +2345,83 @@ document.addEventListener('DOMContentLoaded', function() {
                         ];
                         const mensagemAleatoria = mensagensQuintal[Math.floor(Math.random() * mensagensQuintal.length)];
                         
-                        // Usar o sistema de sussurro da cutscene, se disponível
                         if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
                             window.CutsceneSystem.playWhisper(mensagemAleatoria);
                         } else {
-                            // Ou usar o sussurro interno
                             playWhisper(mensagemAleatoria);
                         }
                         
-                    } else {
-                        console.log('Iniciando transição para a casa...');
-                        ambiente = 'casa';
-                        // Reposicionar jogador
-                        jogador.posicao.x = BASE_W / 2;
-                        jogador.posicao.y = 40;
-                        // Gerar novos inimigos para o novo ambiente
-                        spawnarInimigos(ambiente);
-                        playSoundEffect('menuSelect'); // Som de porta
+                    } else if (ambiente === 'quintal') {
+                        // Do quintal, verificar posição para decidir destino
+                        if (jogador.posicao.y < 90 && Math.abs(jogador.posicao.x - BASE_W/2) < 20) {
+                            // Próximo à porta da casa - voltar para casa
+                            console.log('Iniciando transição para a casa...');
+                            ambiente = 'casa';
+                            jogador.posicao.x = BASE_W / 2;
+                            jogador.posicao.y = 40;
+                            spawnarInimigos(ambiente);
+                            playSoundEffect('menuSelect');
+                            
+                            const mensagensCasa = [
+                                "De volta para dentro... mas você não está sozinho aqui...",
+                                "As paredes têm olhos... eles nunca param de te observar...",
+                                "A casa lembra de você... e eles também..."
+                            ];
+                            const mensagemAleatoria = mensagensCasa[Math.floor(Math.random() * mensagensCasa.length)];
+                            
+                            if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
+                                window.CutsceneSystem.playWhisper(mensagemAleatoria);
+                            } else {
+                                playWhisper(mensagemAleatoria);
+                            }
+                            
+                        } else if (jogador.posicao.y > BASE_H - 20) {
+                            // Na parte de baixo do quintal - ir para o mundo aberto
+                            console.log('Iniciando transição para o mundo aberto...');
+                            ambiente = 'mundo';
+                            mundoOffset.x = 0;
+                            mundoOffset.y = 0;
+                            jogador.posicao.x = BASE_W / 2;
+                            jogador.posicao.y = 30;
+                            spawnarInimigos(ambiente);
+                            playSoundEffect('menuSelect');
+                            
+                            const mensagensMundo = [
+                                "Um mundo vasto se estende à sua frente... cheio de perigos desconhecidos...",
+                                "O vento sussurra segredos antigos... você não está preparado para o que vem...",
+                                "Infinitas possibilidades... e infinitos terrores aguardam..."
+                            ];
+                            const mensagemAleatoria = mensagensMundo[Math.floor(Math.random() * mensagensMundo.length)];
+                            
+                            if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
+                                window.CutsceneSystem.playWhisper(mensagemAleatoria);
+                            } else {
+                                playWhisper(mensagemAleatoria);
+                            }
+                        }
                         
-                        // Sussurro ao entrar na casa
-                        const mensagensCasa = [
-                            "De volta para dentro... mas você não está sozinho aqui...",
-                            "As paredes têm olhos... eles nunca param de te observar...",
-                            "A casa lembra de você... e eles também..."
-                        ];
-                        const mensagemAleatoria = mensagensCasa[Math.floor(Math.random() * mensagensCasa.length)];
-                        
-                        // Usar o sistema de sussurro da cutscene, se disponível
-                        if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
-                            window.CutsceneSystem.playWhisper(mensagemAleatoria);
-                        } else {
-                            // Ou usar o sussurro interno
-                            playWhisper(mensagemAleatoria);
+                    } else if (ambiente === 'mundo') {
+                        // Do mundo aberto, voltar para o quintal se estiver na borda superior
+                        if (jogador.posicao.y < 20) {
+                            console.log('Iniciando transição para o quintal...');
+                            ambiente = 'quintal';
+                            jogador.posicao.x = BASE_W / 2;
+                            jogador.posicao.y = BASE_H - 30;
+                            spawnarInimigos(ambiente);
+                            playSoundEffect('menuSelect');
+                            
+                            const mensagensRetorno = [
+                                "De volta à segurança relativa do quintal...",
+                                "O mundo lá fora é muito perigoso... por enquanto...",
+                                "Você sente um alívio ao voltar... mas por pouco tempo..."
+                            ];
+                            const mensagemAleatoria = mensagensRetorno[Math.floor(Math.random() * mensagensRetorno.length)];
+                            
+                            if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
+                                window.CutsceneSystem.playWhisper(mensagemAleatoria);
+                            } else {
+                                playWhisper(mensagemAleatoria);
+                            }
                         }
                     }
                 }
