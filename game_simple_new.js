@@ -420,169 +420,374 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Desenhar interior da casa
     function drawCasaInterior(ctx, t) {
-        // Fundo básico - piso de madeira
-        ctx.fillStyle = '#302820';
+        // Fundo básico - piso de madeira com tonalidade mais escura e rica
+        const floorGradient = ctx.createLinearGradient(0, 0, BASE_W, BASE_H);
+        floorGradient.addColorStop(0, '#2a1f18');
+        floorGradient.addColorStop(0.5, '#3d2f22');
+        floorGradient.addColorStop(1, '#2f2318');
+        ctx.fillStyle = floorGradient;
         ctx.fillRect(0, 0, BASE_W, BASE_H);
         
-        // Padrão do piso de madeira
-        ctx.strokeStyle = 'rgba(30, 20, 10, 0.3)';
-        for(let y = 0; y < BASE_H; y += 10) {
+        // Padrão do piso de madeira aprimorado
+        ctx.strokeStyle = 'rgba(15, 10, 5, 0.4)';
+        ctx.lineWidth = 0.5;
+        for(let y = 0; y < BASE_H; y += 12) {
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(BASE_W, y);
+            ctx.moveTo(0, y + Math.sin(y * 0.1) * 1);
+            ctx.lineTo(BASE_W, y + Math.sin(y * 0.1) * 1);
             ctx.stroke();
         }
         
-        // Padrão vertical do piso de madeira
-        for(let x = 0; x < BASE_W; x += 20) {
+        // Padrão vertical do piso com variação
+        ctx.strokeStyle = 'rgba(40, 25, 15, 0.3)';
+        for(let x = 0; x < BASE_W; x += 25) {
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, BASE_H);
+            ctx.moveTo(x + Math.sin(x * 0.05) * 2, 0);
+            ctx.lineTo(x + Math.sin(x * 0.05) * 2, BASE_H);
             ctx.stroke();
         }
         
-        // Paredes (escuras)
-        ctx.fillStyle = '#251a12';
+        // Paredes com textura e gradiente
+        const wallGradient = ctx.createLinearGradient(0, 0, 0, 30);
+        wallGradient.addColorStop(0, '#1a0f08');
+        wallGradient.addColorStop(1, '#2f1f12');
+        ctx.fillStyle = wallGradient;
+        
         // Parede superior
-        ctx.fillRect(0, 0, BASE_W, 25);
+        ctx.fillRect(0, 0, BASE_W, 30);
         // Parede esquerda
-        ctx.fillRect(0, 0, 25, BASE_H);
+        ctx.fillRect(0, 0, 30, BASE_H);
         // Parede direita
-        ctx.fillRect(BASE_W - 25, 0, 25, BASE_H);
+        ctx.fillRect(BASE_W - 30, 0, 30, BASE_H);
         // Parede inferior
-        ctx.fillRect(0, BASE_H - 25, BASE_W, 25);
+        ctx.fillRect(0, BASE_H - 30, BASE_W, 30);
         
-        // Porta para o quintal (parede inferior)
-        ctx.fillStyle = '#40342c';
-        ctx.fillRect(BASE_W/2 - 15, BASE_H - 25, 30, 25);
+        // Textura das paredes
+        ctx.fillStyle = 'rgba(60, 40, 20, 0.2)';
+        for(let i = 0; i < 50; i++) {
+            const x = Math.random() * BASE_W;
+            const y = Math.random() * 30;
+            ctx.fillRect(x, y, 1, 2);
+            if(x < 30) ctx.fillRect(x, Math.random() * BASE_H, 1, 2);
+            if(x > BASE_W - 30) ctx.fillRect(x, Math.random() * BASE_H, 1, 2);
+            ctx.fillRect(Math.random() * BASE_W, BASE_H - 30 + Math.random() * 30, 2, 1);
+        }
         
-        // Maçaneta da porta
-        ctx.fillStyle = '#c0a080';
+        // Porta para o quintal (parede inferior) - melhorada
+        const doorGradient = ctx.createLinearGradient(BASE_W/2 - 15, BASE_H - 30, BASE_W/2 + 15, BASE_H);
+        doorGradient.addColorStop(0, '#4a3428');
+        doorGradient.addColorStop(0.5, '#5d412f');
+        doorGradient.addColorStop(1, '#4a3428');
+        ctx.fillStyle = doorGradient;
+        ctx.fillRect(BASE_W/2 - 15, BASE_H - 30, 30, 30);
+        
+        // Detalhes da porta
+        ctx.strokeStyle = '#6b4a35';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(BASE_W/2 - 13, BASE_H - 28, 26, 26);
+        ctx.strokeRect(BASE_W/2 - 10, BASE_H - 25, 20, 20);
+        
+        // Maçaneta da porta com brilho
+        const knobGradient = ctx.createRadialGradient(BASE_W/2 + 10, BASE_H - 13, 1, BASE_W/2 + 10, BASE_H - 13, 3);
+        knobGradient.addColorStop(0, '#e6c090');
+        knobGradient.addColorStop(1, '#b8956b');
+        ctx.fillStyle = knobGradient;
         ctx.beginPath();
-        ctx.arc(BASE_W/2 + 10, BASE_H - 13, 2, 0, Math.PI * 2);
+        ctx.arc(BASE_W/2 + 10, BASE_H - 13, 2.5, 0, Math.PI * 2);
         ctx.fill();
         
-        // Móveis
+        // Móveis aprimorados
         
-        // Mesa
-        ctx.fillStyle = '#603020';
+        // Mesa com detalhes
+        const tableGradient = ctx.createLinearGradient(50, 50, 110, 90);
+        tableGradient.addColorStop(0, '#704030');
+        tableGradient.addColorStop(1, '#5a3020');
+        ctx.fillStyle = tableGradient;
         ctx.fillRect(50, 50, 60, 40);
-        // Sombra da mesa
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(50, 90, 60, 5);
         
-        // Cadeiras
-        ctx.fillStyle = '#503020';
-        ctx.fillRect(40, 60, 10, 10); // Cadeira 1
-        ctx.fillRect(110, 60, 10, 10); // Cadeira 2
+        // Bordas da mesa
+        ctx.strokeStyle = '#4a2818';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, 60, 40);
         
-        // Armário
-        ctx.fillStyle = '#402010';
-        ctx.fillRect(BASE_W - 70, 40, 30, 80);
-        // Detalhes do armário
-        ctx.fillStyle = '#603030';
-        ctx.fillRect(BASE_W - 65, 50, 20, 25);
-        ctx.fillRect(BASE_W - 65, 85, 20, 25);
+        // Pernas da mesa
+        ctx.fillStyle = '#4a2818';
+        ctx.fillRect(52, 88, 4, 8);
+        ctx.fillRect(104, 88, 4, 8);
+        ctx.fillRect(52, 52, 4, 8);
+        ctx.fillRect(104, 52, 4, 8);
         
-        // Cama
-        ctx.fillStyle = '#503030';
+        // Sombra da mesa aprimorada
+        const shadowGradient = ctx.createRadialGradient(80, 95, 5, 80, 100, 30);
+        shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
+        shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = shadowGradient;
+        ctx.fillRect(45, 90, 70, 15);
+        
+        // Cadeiras melhoradas
+        ctx.fillStyle = '#5a3828';
+        // Cadeira 1
+        ctx.fillRect(38, 58, 12, 12);
+        ctx.fillRect(40, 50, 8, 8); // Encosto
+        // Cadeira 2
+        ctx.fillRect(112, 58, 12, 12);
+        ctx.fillRect(114, 50, 8, 8); // Encosto
+        
+        // Armário com detalhes aprimorados
+        const cabinetGradient = ctx.createLinearGradient(BASE_W - 75, 40, BASE_W - 40, 120);
+        cabinetGradient.addColorStop(0, '#453020');
+        cabinetGradient.addColorStop(1, '#352010');
+        ctx.fillStyle = cabinetGradient;
+        ctx.fillRect(BASE_W - 75, 40, 35, 80);
+        
+        // Bordas do armário
+        ctx.strokeStyle = '#2a1a0a';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(BASE_W - 75, 40, 35, 80);
+        
+        // Portas do armário
+        ctx.fillStyle = '#6b4030';
+        ctx.fillRect(BASE_W - 72, 45, 14, 30);
+        ctx.fillRect(BASE_W - 72, 80, 14, 30);
+        ctx.fillRect(BASE_W - 55, 45, 14, 30);
+        ctx.fillRect(BASE_W - 55, 80, 14, 30);
+        
+        // Puxadores
+        ctx.fillStyle = '#c0a080';
+        ctx.fillRect(BASE_W - 60, 58, 1, 3);
+        ctx.fillRect(BASE_W - 60, 93, 1, 3);
+        ctx.fillRect(BASE_W - 47, 58, 1, 3);
+        ctx.fillRect(BASE_W - 47, 93, 1, 3);
+        
+        // Cama mais detalhada
+        const bedGradient = ctx.createLinearGradient(40, BASE_H - 80, 90, BASE_H - 40);
+        bedGradient.addColorStop(0, '#654040');
+        bedGradient.addColorStop(1, '#4a2828');
+        ctx.fillStyle = bedGradient;
         ctx.fillRect(40, BASE_H - 80, 50, 40);
-        // Travesseiro
-        ctx.fillStyle = '#eaeaea';
-        ctx.fillRect(45, BASE_H - 75, 15, 10);
-        // Cobertor
-        ctx.fillStyle = '#7a3030';
-        ctx.fillRect(45, BASE_H - 65, 40, 25);
         
-        // Tapete
-        ctx.fillStyle = '#a06040';
-        ctx.fillRect(BASE_W/2 - 30, BASE_H/2 - 20, 60, 40);
+        // Estrutura da cama
+        ctx.strokeStyle = '#3a1f1f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(40, BASE_H - 80, 50, 40);
+        
+        // Travesseiro aprimorado
+        const pillowGradient = ctx.createRadialGradient(52, BASE_H - 70, 2, 52, BASE_H - 70, 8);
+        pillowGradient.addColorStop(0, '#f5f5f5');
+        pillowGradient.addColorStop(1, '#d5d5d5');
+        ctx.fillStyle = pillowGradient;
+        ctx.fillRect(45, BASE_H - 75, 15, 10);
+        
+        // Cobertor com padrão
+        ctx.fillStyle = '#8a4040';
+        ctx.fillRect(45, BASE_H - 65, 40, 25);
+        // Padrão do cobertor
+        ctx.strokeStyle = '#6a2a2a';
+        ctx.lineWidth = 0.5;
+        for(let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(45 + i * 10, BASE_H - 65);
+            ctx.lineTo(45 + i * 10, BASE_H - 40);
+            ctx.stroke();
+        }
+        
+        // Tapete com padrão mais detalhado
+        const rugGradient = ctx.createRadialGradient(BASE_W/2, BASE_H/2, 10, BASE_W/2, BASE_H/2, 35);
+        rugGradient.addColorStop(0, '#b07050');
+        rugGradient.addColorStop(1, '#8a5030');
+        ctx.fillStyle = rugGradient;
+        ctx.fillRect(BASE_W/2 - 35, BASE_H/2 - 25, 70, 50);
+        
         // Padrão do tapete
-        ctx.strokeStyle = '#704020';
+        ctx.strokeStyle = '#6a3020';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(BASE_W/2 - 30, BASE_H/2 - 20, 60, 40);
         ctx.strokeRect(BASE_W/2 - 25, BASE_H/2 - 15, 50, 30);
         
-        // Estante de livros
-        ctx.fillStyle = '#603020';
-        ctx.fillRect(BASE_W - 65, BASE_H - 100, 40, 60);
-        // Livros na estante
-        for(let i = 0; i < 3; i++) {
-            for(let j = 0; j < 3; j++) {
-                ctx.fillStyle = ['#c05040', '#d09030', '#5060c0', '#60a040'][Math.floor(Math.random() * 4)];
-                ctx.fillRect(BASE_W - 60 + j*12, BASE_H - 95 + i*18, 8, 15);
+        // Estante de livros melhorada
+        ctx.fillStyle = '#5a3828';
+        ctx.fillRect(BASE_W - 70, BASE_H - 100, 45, 65);
+        
+        // Prateleiras
+        ctx.fillStyle = '#4a2818';
+        ctx.fillRect(BASE_W - 68, BASE_H - 85, 41, 2);
+        ctx.fillRect(BASE_W - 68, BASE_H - 65, 41, 2);
+        ctx.fillRect(BASE_W - 68, BASE_H - 45, 41, 2);
+        
+        // Livros na estante com cores variadas
+        const bookColors = ['#c05040', '#d09030', '#5060c0', '#60a040', '#a040c0', '#c04060'];
+        for(let shelf = 0; shelf < 3; shelf++) {
+            for(let book = 0; book < 4; book++) {
+                const bookColor = bookColors[Math.floor(((shelf * 4 + book) * 17) % bookColors.length)];
+                ctx.fillStyle = bookColor;
+                const bookX = BASE_W - 65 + book * 9;
+                const bookY = BASE_H - 95 + shelf * 20;
+                const bookHeight = 12 + ((shelf * 4 + book) % 4);
+                ctx.fillRect(bookX, bookY, 7, bookHeight);
+                
+                // Detalhes dos livros
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(bookX + 1, bookY + 1, 5, 1);
             }
         }
         
-        // Janela na parede
-        ctx.fillStyle = '#152030';
-        ctx.fillRect(30, 5, 40, 15);
+        // Janela na parede aprimorada
+        const windowGradient = ctx.createLinearGradient(30, 5, 70, 20);
+        windowGradient.addColorStop(0, '#0f1a2a');
+        windowGradient.addColorStop(0.5, '#1a2a3a');
+        windowGradient.addColorStop(1, '#0f1a2a');
+        ctx.fillStyle = windowGradient;
+        ctx.fillRect(30, 5, 40, 18);
+        
+        // Moldura da janela
+        ctx.strokeStyle = '#6a5040';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(30, 5, 40, 18);
+        
         // Grade da janela
-        ctx.strokeStyle = '#605040';
+        ctx.strokeStyle = '#8a7060';
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(50, 5);
-        ctx.lineTo(50, 20);
+        ctx.lineTo(50, 23);
+        ctx.moveTo(30, 14);
+        ctx.lineTo(70, 14);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(30, 12);
-        ctx.lineTo(70, 12);
-        ctx.stroke();
+        
+        // Reflexo na janela
+        ctx.fillStyle = 'rgba(200, 220, 255, 0.1)';
+        ctx.fillRect(32, 7, 15, 8);
         
         // Luz ambiente que pisca levemente
-        const lightFlicker = Math.sin(t * 0.01) * 0.05 + 0.95;
-        ctx.fillStyle = `rgba(255, 220, 180, ${0.15 * lightFlicker})`;
+        const lightFlicker = Math.sin(t * 0.008) * 0.03 + 0.97;
+        const ambientGradient = ctx.createRadialGradient(BASE_W/2, BASE_H/2, 20, BASE_W/2, BASE_H/2, 100);
+        ambientGradient.addColorStop(0, `rgba(255, 220, 180, ${0.12 * lightFlicker})`);
+        ambientGradient.addColorStop(1, `rgba(255, 200, 150, ${0.05 * lightFlicker})`);
+        ctx.fillStyle = ambientGradient;
         ctx.fillRect(0, 0, BASE_W, BASE_H);
         
-        // Iluminação da lareira
-        const fireLight = Math.sin(t * 0.1) * 0.1 + 0.9;
-        ctx.fillStyle = `rgba(255, 140, 30, ${0.2 * fireLight})`;
-        ctx.beginPath();
-        ctx.arc(50, BASE_H - 50, 40 + fireLight * 10, 0, Math.PI * 2);
-        ctx.fill();
+        // Lareira aprimorada
+        const fireplaceGradient = ctx.createLinearGradient(25, BASE_H - 75, 75, BASE_H - 25);
+        fireplaceGradient.addColorStop(0, '#3a2618');
+        fireplaceGradient.addColorStop(1, '#2a1608');
+        ctx.fillStyle = fireplaceGradient;
+        ctx.fillRect(25, BASE_H - 75, 50, 50);
         
-        // Lareira
-        ctx.fillStyle = '#302010';
-        ctx.fillRect(30, BASE_H - 70, 40, 45);
+        // Borda da lareira
+        ctx.strokeStyle = '#1a0f05';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(25, BASE_H - 75, 50, 50);
+        
         // Interior da lareira
-        ctx.fillStyle = '#0c0804';
-        ctx.fillRect(35, BASE_H - 65, 30, 35);
-        // Fogo (animado)
-        for(let i = 0; i < 15; i++) {
-            const flameHeight = 10 + Math.sin(t * 0.1 + i) * 5;
-            const flameWidth = 3 + Math.sin(t * 0.2 + i) * 1;
-            const flameX = 40 + i * 1.5;
-            ctx.fillStyle = `rgba(255, ${100 + Math.sin(t * 0.1 + i) * 50}, 0, ${0.7 + Math.sin(t * 0.3 + i) * 0.3})`;
+        ctx.fillStyle = '#0f0605';
+        ctx.fillRect(30, BASE_H - 70, 40, 40);
+        
+        // Fogo animado mais realista
+        const fireIntensity = Math.sin(t * 0.08) * 0.3 + 0.7;
+        for(let i = 0; i < 20; i++) {
+            const flameHeight = 8 + Math.sin(t * 0.12 + i * 0.5) * 6 * fireIntensity;
+            const flameWidth = 2 + Math.sin(t * 0.15 + i * 0.3) * 1.5;
+            const flameX = 35 + i * 1.8;
+            
+            // Chama principal
+            ctx.fillStyle = `rgba(255, ${80 + Math.sin(t * 0.1 + i) * 60}, 0, ${0.8 + Math.sin(t * 0.2 + i) * 0.2})`;
             ctx.beginPath();
-            ctx.moveTo(flameX, BASE_H - 40);
-            ctx.lineTo(flameX - flameWidth, BASE_H - 40 - flameHeight);
-            ctx.lineTo(flameX + flameWidth, BASE_H - 40 - flameHeight);
+            ctx.moveTo(flameX, BASE_H - 35);
+            ctx.quadraticCurveTo(
+                flameX - flameWidth, BASE_H - 35 - flameHeight * 0.6,
+                flameX, BASE_H - 35 - flameHeight
+            );
+            ctx.quadraticCurveTo(
+                flameX + flameWidth, BASE_H - 35 - flameHeight * 0.6,
+                flameX, BASE_H - 35
+            );
+            ctx.fill();
+            
+            // Núcleo da chama
+            ctx.fillStyle = `rgba(255, 255, 100, ${0.5 + Math.sin(t * 0.25 + i) * 0.3})`;
+            ctx.beginPath();
+            ctx.moveTo(flameX, BASE_H - 35);
+            ctx.quadraticCurveTo(
+                flameX - flameWidth * 0.5, BASE_H - 35 - flameHeight * 0.4,
+                flameX, BASE_H - 35 - flameHeight * 0.7
+            );
+            ctx.quadraticCurveTo(
+                flameX + flameWidth * 0.5, BASE_H - 35 - flameHeight * 0.4,
+                flameX, BASE_H - 35
+            );
             ctx.fill();
         }
         
-        // Porta-objetos decorativo
-        ctx.fillStyle = '#604030';
-        ctx.fillRect(150, 30, 70, 15);
-        // Objetos
-        ctx.fillStyle = '#a0a0c0'; // Vaso
-        ctx.fillRect(160, 15, 10, 15);
-        ctx.fillStyle = '#80c080'; // Planta
+        // Iluminação da lareira
+        const fireLightRadius = 50 + Math.sin(t * 0.1) * 15;
+        const fireLightGradient = ctx.createRadialGradient(50, BASE_H - 50, 5, 50, BASE_H - 50, fireLightRadius);
+        fireLightGradient.addColorStop(0, `rgba(255, 150, 50, ${0.15 * fireIntensity})`);
+        fireLightGradient.addColorStop(0.5, `rgba(255, 100, 30, ${0.08 * fireIntensity})`);
+        fireLightGradient.addColorStop(1, 'rgba(255, 80, 20, 0)');
+        ctx.fillStyle = fireLightGradient;
+        ctx.fillRect(0, 0, BASE_W, BASE_H);
+        
+        // Porta-objetos decorativo melhorado
+        ctx.fillStyle = '#6a4535';
+        ctx.fillRect(150, 30, 75, 18);
+        ctx.strokeStyle = '#4a3025';
+        ctx.strokeRect(150, 30, 75, 18);
+        
+        // Objetos decorativos
+        // Vaso
+        const vaseGradient = ctx.createLinearGradient(162, 12, 168, 30);
+        vaseGradient.addColorStop(0, '#b0b0d0');
+        vaseGradient.addColorStop(1, '#8080a0');
+        ctx.fillStyle = vaseGradient;
+        ctx.fillRect(162, 12, 12, 18);
+        
+        // Planta no vaso
+        ctx.fillStyle = '#60a060';
         ctx.beginPath();
-        ctx.arc(165, 10, 5, 0, Math.PI * 2);
+        ctx.arc(168, 8, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#40a040';
+        ctx.beginPath();
+        ctx.arc(165, 6, 3, 0, Math.PI * 2);
+        ctx.arc(171, 6, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.fillStyle = '#c09080'; // Caixa
-        ctx.fillRect(180, 20, 15, 10);
+        // Caixa decorativa
+        const boxGradient = ctx.createLinearGradient(185, 18, 200, 28);
+        boxGradient.addColorStop(0, '#d0a080');
+        boxGradient.addColorStop(1, '#a08060');
+        ctx.fillStyle = boxGradient;
+        ctx.fillRect(185, 18, 18, 12);
+        ctx.strokeStyle = '#806050';
+        ctx.strokeRect(185, 18, 18, 12);
         
-        // Sombras nas paredes
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 0, BASE_W, 5);
-        ctx.fillRect(0, 0, 5, BASE_H);
-        ctx.fillRect(BASE_W - 5, 0, 5, BASE_H);
+        // Livro
+        ctx.fillStyle = '#8060a0';
+        ctx.fillRect(210, 20, 10, 15);
+        ctx.strokeStyle = '#604080';
+        ctx.strokeRect(210, 20, 10, 15);
+        
+        // Sombras volumétricas nas paredes
+        const wallShadowGradient = ctx.createLinearGradient(0, 0, 30, 30);
+        wallShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+        wallShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = wallShadowGradient;
+        ctx.fillRect(0, 0, 30, BASE_H);
+        ctx.fillRect(0, 0, BASE_W, 30);
         
         // Interação - Texto indicando a porta para o quintal
-        if(jogador.posicao.y > BASE_H - 40 && 
-          Math.abs(jogador.posicao.x - BASE_W/2) < 20) {
-            ctx.fillStyle = 'white';
-            ctx.font = '8px monospace';
-            ctx.fillText("Pressione E para sair", BASE_W/2 - 45, BASE_H - 30);
+        if(jogador.posicao.y > BASE_H - 45 && 
+          Math.abs(jogador.posicao.x - BASE_W/2) < 25) {
+            // Fundo do texto
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(BASE_W/2 - 60, BASE_H - 40, 120, 12);
+            
+            // Texto com sombra
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText("Pressione E para sair", BASE_W/2 - 58, BASE_H - 32);
+            ctx.fillStyle = '#ffeeaa';
+            ctx.fillText("Pressione E para sair", BASE_W/2 - 59, BASE_H - 33);
         }
     }
     
@@ -1730,130 +1935,235 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderizarUI(ctx) {
         const pulsacao = Math.sin(tick * 0.1) * 0.1 + 0.9;
         
-        // Painel de status com fundo semi-transparente
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(2, 2, 160, 48);
+        // === PAINEL DE STATUS PRINCIPAL ===
+        // Fundo do painel com gradiente moderno
+        const gradient = ctx.createLinearGradient(2, 2, 2, 55);
+        gradient.addColorStop(0, 'rgba(30, 15, 35, 0.95)');
+        gradient.addColorStop(0.5, 'rgba(15, 10, 25, 0.9)');
+        gradient.addColorStop(1, 'rgba(20, 15, 30, 0.95)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(2, 2, 180, 55);
         
-        // Borda do painel
-        ctx.strokeStyle = 'rgba(100, 100, 100, 0.8)';
+        // Borda externa do painel
+        ctx.strokeStyle = `rgba(150, 100, 200, ${0.6 + pulsacao * 0.2})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(2, 2, 180, 55);
+        
+        // Borda interna (efeito de profundidade)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(2, 2, 160, 48);
+        ctx.strokeRect(3, 3, 178, 53);
         
-        // === BARRA DE VIDA ===
-        // Fundo da barra de vida
-        ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-        ctx.fillRect(5, 6, 102, 12);
-        
-        // Gradiente da vida
-        const vidaPct = jogador.vida / jogador.vidaMaxima;
-        let corVida;
-        if (vidaPct > 0.6) {
-            corVida = `rgb(${50 * pulsacao}, ${200 * pulsacao}, ${50 * pulsacao})`;
-        } else if (vidaPct > 0.3) {
-            corVida = `rgb(${255 * pulsacao}, ${255 * pulsacao}, ${50 * pulsacao})`;
-        } else {
-            corVida = `rgb(${255 * pulsacao}, ${50 * pulsacao}, ${50 * pulsacao})`;
-        }
-        
-        ctx.fillStyle = corVida;
-        ctx.fillRect(6, 7, vidaPct * 100, 10);
+        // === BARRA DE VIDA APRIMORADA ===
+        // Fundo da barra com bordas arredondadas simuladas
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.9)';
+        ctx.fillRect(6, 8, 112, 16);
         
         // Borda da barra de vida
-        ctx.strokeStyle = 'white';
+        ctx.strokeStyle = 'rgba(80, 80, 120, 0.8)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(5, 6, 102, 12);
+        ctx.strokeRect(6, 8, 112, 16);
         
-        // Texto da vida com sombra
-        ctx.fillStyle = 'black';
-        ctx.font = '8px monospace';
-        ctx.fillText(`VIDA: ${jogador.vida}/${jogador.vidaMaxima}`, 7, 15);
-        ctx.fillStyle = 'white';
-        ctx.fillText(`VIDA: ${jogador.vida}/${jogador.vidaMaxima}`, 6, 14);
+        // Gradiente da vida baseado na porcentagem
+        const vidaPct = jogador.vida / jogador.vidaMaxima;
+        const barraVidaGradient = ctx.createLinearGradient(7, 9, 7, 23);
         
-        // === BARRA DE SANIDADE ===
-        // Fundo da barra de sanidade
-        ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-        ctx.fillRect(5, 21, 102, 12);
+        if (vidaPct > 0.6) {
+            barraVidaGradient.addColorStop(0, `rgba(${80 * pulsacao}, ${255 * pulsacao}, ${80 * pulsacao}, 0.9)`);
+            barraVidaGradient.addColorStop(1, `rgba(${40 * pulsacao}, ${200 * pulsacao}, ${40 * pulsacao}, 0.9)`);
+        } else if (vidaPct > 0.3) {
+            barraVidaGradient.addColorStop(0, `rgba(${255 * pulsacao}, ${255 * pulsacao}, ${80 * pulsacao}, 0.9)`);
+            barraVidaGradient.addColorStop(1, `rgba(${220 * pulsacao}, ${200 * pulsacao}, ${40 * pulsacao}, 0.9)`);
+        } else {
+            barraVidaGradient.addColorStop(0, `rgba(${255 * pulsacao}, ${80 * pulsacao}, ${80 * pulsacao}, 0.9)`);
+            barraVidaGradient.addColorStop(1, `rgba(${200 * pulsacao}, ${40 * pulsacao}, ${40 * pulsacao}, 0.9)`);
+        }
+        
+        ctx.fillStyle = barraVidaGradient;
+        ctx.fillRect(7, 9, vidaPct * 110, 14);
+        
+        // Brilho no topo da barra de vida
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(7, 9, vidaPct * 110, 2);
+        
+        // Texto da vida com sombra aprimorada
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText(`VIDA: ${jogador.vida}/${jogador.vidaMaxima}`, 9, 18);
+        ctx.fillStyle = vidaPct > 0.3 ? '#ffffff' : '#ffaaaa';
+        ctx.fillText(`VIDA: ${jogador.vida}/${jogador.vidaMaxima}`, 8, 17);
+        
+        // === BARRA DE SANIDADE APRIMORADA ===
+        // Fundo da barra
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.9)';
+        ctx.fillRect(6, 28, 112, 16);
+        
+        // Borda da barra de sanidade
+        ctx.strokeStyle = 'rgba(80, 120, 180, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(6, 28, 112, 16);
         
         // Gradiente da sanidade
         const sanidadePct = jogador.sanidade / jogador.sanidadeMaxima;
-        let corSanidade;
+        const barraSanidadeGradient = ctx.createLinearGradient(7, 29, 7, 43);
+        
         if (sanidadePct > 0.6) {
-            corSanidade = `rgb(${50 * pulsacao}, ${200 * pulsacao}, ${255 * pulsacao})`;
+            barraSanidadeGradient.addColorStop(0, `rgba(${80 * pulsacao}, ${200 * pulsacao}, ${255 * pulsacao}, 0.9)`);
+            barraSanidadeGradient.addColorStop(1, `rgba(${40 * pulsacao}, ${150 * pulsacao}, ${220 * pulsacao}, 0.9)`);
         } else if (sanidadePct > 0.3) {
-            corSanidade = `rgb(${255 * pulsacao}, ${200 * pulsacao}, ${100 * pulsacao})`;
+            barraSanidadeGradient.addColorStop(0, `rgba(${255 * pulsacao}, ${200 * pulsacao}, ${150 * pulsacao}, 0.9)`);
+            barraSanidadeGradient.addColorStop(1, `rgba(${220 * pulsacao}, ${160 * pulsacao}, ${100 * pulsacao}, 0.9)`);
         } else {
-            corSanidade = `rgb(${200 * pulsacao}, ${50 * pulsacao}, ${255 * pulsacao})`;
+            barraSanidadeGradient.addColorStop(0, `rgba(${255 * pulsacao}, ${100 * pulsacao}, ${255 * pulsacao}, 0.9)`);
+            barraSanidadeGradient.addColorStop(1, `rgba(${200 * pulsacao}, ${50 * pulsacao}, ${200 * pulsacao}, 0.9)`);
         }
         
-        ctx.fillStyle = corSanidade;
-        ctx.fillRect(6, 22, sanidadePct * 100, 10);
+        ctx.fillStyle = barraSanidadeGradient;
+        ctx.fillRect(7, 29, sanidadePct * 110, 14);
         
-        // Borda da barra de sanidade
-        ctx.strokeStyle = 'cyan';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(5, 21, 102, 12);
+        // Brilho no topo da barra de sanidade
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(7, 29, sanidadePct * 110, 2);
         
-        // Texto da sanidade com sombra
-        ctx.fillStyle = 'black';
-        ctx.fillText(`SANIDADE: ${jogador.sanidade}/${jogador.sanidadeMaxima}`, 7, 30);
-        ctx.fillStyle = 'cyan';
-        ctx.fillText(`SANIDADE: ${jogador.sanidade}/${jogador.sanidadeMaxima}`, 6, 29);
+        // Texto da sanidade com sombra aprimorada
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillText(`SANIDADE: ${jogador.sanidade}/${jogador.sanidadeMaxima}`, 9, 38);
+        ctx.fillStyle = sanidadePct > 0.3 ? '#aaeeff' : '#ffaaff';
+        ctx.fillText(`SANIDADE: ${jogador.sanidade}/${jogador.sanidadeMaxima}`, 8, 37);
         
-        // === CONTADOR DE INIMIGOS ===
-        ctx.fillStyle = 'black';
-        ctx.fillText(`INIMIGOS: ${inimigosAtivos.length}`, 7, 44);
-        ctx.fillStyle = inimigosAtivos.length > 0 ? 'red' : 'green';
-        ctx.fillText(`INIMIGOS: ${inimigosAtivos.length}`, 6, 43);
+        // === CONTADOR DE INIMIGOS ESTILIZADO ===
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillText(`INIMIGOS: ${inimigosAtivos.length}`, 9, 52);
+        const corInimigos = inimigosAtivos.length > 0 ? '#ff6666' : '#66ff66';
+        ctx.fillStyle = corInimigos;
+        ctx.fillText(`INIMIGOS: ${inimigosAtivos.length}`, 8, 51);
         
-        // === INDICADOR DE BAIXA VIDA/SANIDADE ===
+        // === INDICADOR DE TIPO DE ATAQUE ===
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.9)';
+        ctx.fillRect(BASE_W - 85, 5, 80, 25);
+        ctx.strokeStyle = 'rgba(200, 150, 100, 0.7)';
+        ctx.strokeRect(BASE_W - 85, 5, 80, 25);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.font = 'bold 8px monospace';
+        ctx.fillText(`ATAQUE: ${tipoAtaque.toUpperCase()}`, BASE_W - 82, 16);
+        
+        let corAtaque = '#ffffff';
+        if (tipoAtaque === 'rapido') corAtaque = '#aaffaa';
+        else if (tipoAtaque === 'medio') corAtaque = '#ffaa66';
+        else if (tipoAtaque === 'forte') corAtaque = '#ff6666';
+        
+        ctx.fillStyle = corAtaque;
+        ctx.fillText(`ATAQUE: ${tipoAtaque.toUpperCase()}`, BASE_W - 83, 15);
+        
+        ctx.fillStyle = 'rgba(150, 150, 150, 0.8)';
+        ctx.font = '7px monospace';
+        ctx.fillText('1-2-3 para trocar', BASE_W - 82, 25);
+        
+        // === INDICADORES DE ALERTA APRIMORADOS ===
         if (jogador.vida < 30) {
             const alerta = Math.sin(tick * 0.3) * 0.5 + 0.5;
-            ctx.fillStyle = `rgba(255, 0, 0, ${0.3 * alerta})`;
-            ctx.fillRect(0, 0, BASE_W, 3);
-            ctx.fillRect(0, BASE_H - 3, BASE_W, 3);
-            ctx.fillRect(0, 0, 3, BASE_H);
-            ctx.fillRect(BASE_W - 3, 0, 3, BASE_H);
+            const intensidade = 0.4 * alerta;
+            
+            // Bordas pulsantes vermelhas
+            ctx.fillStyle = `rgba(255, 50, 50, ${intensidade})`;
+            ctx.fillRect(0, 0, BASE_W, 4);
+            ctx.fillRect(0, BASE_H - 4, BASE_W, 4);
+            ctx.fillRect(0, 0, 4, BASE_H);
+            ctx.fillRect(BASE_W - 4, 0, 4, BASE_H);
+            
+            // Efeito de vinheta vermelha
+            const alertGradient = ctx.createRadialGradient(BASE_W/2, BASE_H/2, 50, BASE_W/2, BASE_H/2, 150);
+            alertGradient.addColorStop(0, 'rgba(255, 0, 0, 0)');
+            alertGradient.addColorStop(0.7, `rgba(255, 0, 0, ${intensidade * 0.1})`);
+            alertGradient.addColorStop(1, `rgba(255, 0, 0, ${intensidade * 0.3})`);
+            ctx.fillStyle = alertGradient;
+            ctx.fillRect(0, 0, BASE_W, BASE_H);
         }
         
         if (jogador.sanidade < 30) {
             const alerta = Math.sin(tick * 0.4) * 0.5 + 0.5;
-            ctx.fillStyle = `rgba(255, 0, 255, ${0.2 * alerta})`;
+            const intensidade = 0.3 * alerta;
+            
             // Efeito de distorção nas bordas
-            for (let i = 0; i < 5; i++) {
-                const offset = Math.random() * 4 - 2;
-                ctx.fillRect(i * 2 + offset, 0, 1, BASE_H);
-                ctx.fillRect(BASE_W - i * 2 + offset, 0, 1, BASE_H);
+            ctx.fillStyle = `rgba(255, 0, 255, ${intensidade})`;
+            for (let i = 0; i < 8; i++) {
+                const offset = Math.random() * 6 - 3;
+                ctx.fillRect(i * 3 + offset, 0, 2, BASE_H);
+                ctx.fillRect(BASE_W - i * 3 + offset, 0, 2, BASE_H);
             }
+            
+            // Efeito de vinheta roxa
+            const sanityGradient = ctx.createRadialGradient(BASE_W/2, BASE_H/2, 40, BASE_W/2, BASE_H/2, 120);
+            sanityGradient.addColorStop(0, 'rgba(255, 0, 255, 0)');
+            sanityGradient.addColorStop(0.6, `rgba(200, 0, 200, ${intensidade * 0.1})`);
+            sanityGradient.addColorStop(1, `rgba(150, 0, 150, ${intensidade * 0.25})`);
+            ctx.fillStyle = sanityGradient;
+            ctx.fillRect(0, 0, BASE_W, BASE_H);
         }
         
-        // === MINI-MAPA (canto superior direito) ===
-        const miniMapSize = 40;
-        const miniMapX = BASE_W - miniMapSize - 5;
-        const miniMapY = 5;
+        // === MINI-MAPA APRIMORADO ===
+        const miniMapSize = 50;
+        const miniMapX = BASE_W - miniMapSize - 8;
+        const miniMapY = 8;
         
-        // Fundo do mini-mapa
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        // Fundo do mini-mapa com gradiente
+        const miniMapGradient = ctx.createLinearGradient(miniMapX, miniMapY, miniMapX, miniMapY + miniMapSize);
+        miniMapGradient.addColorStop(0, 'rgba(10, 20, 30, 0.9)');
+        miniMapGradient.addColorStop(1, 'rgba(20, 10, 40, 0.9)');
+        ctx.fillStyle = miniMapGradient;
         ctx.fillRect(miniMapX, miniMapY, miniMapSize, miniMapSize);
         
         // Borda do mini-mapa
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(150, 200, 255, 0.8)';
+        ctx.lineWidth = 2;
         ctx.strokeRect(miniMapX, miniMapY, miniMapSize, miniMapSize);
         
-        // Jogador no mini-mapa
+        // Borda interna
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(miniMapX + 1, miniMapY + 1, miniMapSize - 2, miniMapSize - 2);
+        
+        // Jogador no mini-mapa (com brilho)
         const playerMapX = miniMapX + (jogador.posicao.x / BASE_W) * miniMapSize;
         const playerMapY = miniMapY + (jogador.posicao.y / BASE_H) * miniMapSize;
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(playerMapX - 1, playerMapY - 1, 2, 2);
         
-        // Inimigos no mini-mapa
+        // Brilho do jogador
+        ctx.fillStyle = 'rgba(100, 150, 255, 0.5)';
+        ctx.beginPath();
+        ctx.arc(playerMapX, playerMapY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Jogador
+        ctx.fillStyle = '#66aaff';
+        ctx.fillRect(playerMapX - 1, playerMapY - 1, 3, 3);
+        
+        // Inimigos no mini-mapa (com efeitos)
         for (const inimigo of inimigosAtivos) {
             const inimigoMapX = miniMapX + (inimigo.posicao.x / BASE_W) * miniMapSize;
             const inimigoMapY = miniMapY + (inimigo.posicao.y / BASE_H) * miniMapSize;
-            ctx.fillStyle = inimigo.alerta ? 'red' : 'orange';
-            ctx.fillRect(inimigoMapX, inimigoMapY, 1, 1);
+            
+            if (inimigo.alerta) {
+                // Brilho para inimigos em alerta
+                ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
+                ctx.beginPath();
+                ctx.arc(inimigoMapX, inimigoMapY, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ff4444';
+            } else {
+                ctx.fillStyle = '#ff8844';
+            }
+            
+            ctx.fillRect(inimigoMapX, inimigoMapY, 2, 2);
         }
+        
+        // Título do mini-mapa
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.font = '7px monospace';
+        ctx.fillText('MAPA', miniMapX + 1, miniMapY - 2);
+        ctx.fillStyle = 'rgba(150, 200, 255, 0.9)';
+        ctx.fillText('MAPA', miniMapX, miniMapY - 3);
     }
     
     // Função principal de renderização

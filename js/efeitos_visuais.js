@@ -332,9 +332,188 @@ const EfeitosVisuais = (function() {
             state.tremores.push(new Tremor(intensidade, duracao));
         },
         
-        // Criar flash de tela
-        criarFlash: function(cor = '#FFFFFF', duracao = 300, intensidade = 0.5) {
-            state.flashes.push(new Flash(cor, duracao, intensidade));
+        // Criar efeito de cura
+        criarCura: function(x, y, quantidade = 20, tamanho = 4) {
+            const cores = [
+                '#66ff66', '#88ff88', '#aaffaa', '#ccffcc'
+            ];
+            
+            for (let i = 0; i < quantidade; i++) {
+                const angulo = Math.random() * Math.PI * 2;
+                const velocidade = 0.5 + Math.random() * 1.5;
+                const cor = cores[Math.floor(Math.random() * cores.length)];
+                
+                state.particulas.push(new Particula(
+                    x + (Math.random() * 20 - 10),
+                    y + (Math.random() * 20 - 10),
+                    cor,
+                    tamanho * (0.5 + Math.random()),
+                    {
+                        x: Math.cos(angulo) * velocidade,
+                        y: Math.sin(angulo) * velocidade - 1 // Tendência para subir
+                    },
+                    1500 + Math.random() * 1000,
+                    -0.05, // Gravidade negativa (sobe)
+                    'circular'
+                ));
+            }
+        },
+        
+        // Criar efeito de nivel up
+        criarLevelUp: function(x, y) {
+            // Explosão dourada
+            for (let i = 0; i < 30; i++) {
+                const angulo = (i / 30) * Math.PI * 2;
+                const velocidade = 1 + Math.random() * 2;
+                const cor = `hsl(${45 + Math.random() * 30}, 100%, ${60 + Math.random() * 30}%)`;
+                
+                state.particulas.push(new Particula(
+                    x, y, cor,
+                    3 + Math.random() * 4,
+                    {
+                        x: Math.cos(angulo) * velocidade,
+                        y: Math.sin(angulo) * velocidade
+                    },
+                    2000,
+                    0.02,
+                    'circular'
+                ));
+            }
+            
+            // Estrelas que sobem
+            for (let i = 0; i < 15; i++) {
+                const velocidade = {
+                    x: (Math.random() - 0.5) * 0.5,
+                    y: -1 - Math.random() * 1.5
+                };
+                
+                state.particulas.push(new Particula(
+                    x + (Math.random() * 40 - 20),
+                    y + (Math.random() * 20 - 10),
+                    '#ffff00',
+                    2 + Math.random() * 2,
+                    velocidade,
+                    3000,
+                    -0.01,
+                    'circular'
+                ));
+            }
+        },
+        
+        // Criar efeito de magia
+        criarMagia: function(x, y, cor = '#8844ff', quantidade = 25) {
+            for (let i = 0; i < quantidade; i++) {
+                const angulo = Math.random() * Math.PI * 2;
+                const velocidade = 0.3 + Math.random() * 1.2;
+                const tamanho = 2 + Math.random() * 3;
+                
+                state.particulas.push(new Particula(
+                    x + (Math.random() * 30 - 15),
+                    y + (Math.random() * 30 - 15),
+                    cor,
+                    tamanho,
+                    {
+                        x: Math.cos(angulo) * velocidade,
+                        y: Math.sin(angulo) * velocidade
+                    },
+                    2000 + Math.random() * 1500,
+                    Math.random() * 0.02 - 0.01, // Gravidade aleatória
+                    Math.random() > 0.5 ? 'circular' : 'linha'
+                ));
+            }
+        },
+        
+        // Criar efeito de impacto crítico
+        criarCritico: function(x, y) {
+            // Explosão vermelha intensa
+            this.criarExplosao(x, y, '#ff0040', 40, 8, 1500, 0.08);
+            
+            // Linhas de impacto radiantes
+            for (let i = 0; i < 8; i++) {
+                const angulo = (i / 8) * Math.PI * 2;
+                const comprimento = 20 + Math.random() * 15;
+                
+                state.particulas.push(new Particula(
+                    x, y,
+                    '#ffffff',
+                    comprimento,
+                    {
+                        x: Math.cos(angulo) * 2,
+                        y: Math.sin(angulo) * 2
+                    },
+                    400,
+                    0,
+                    'linha'
+                ));
+            }
+            
+            // Flash branco
+            this.criarFlash('#ffffff', 150, 0.3);
+            
+            // Tremor forte
+            this.criarTremor(0.6, 400);
+        },
+        
+        // Criar rastro de movimento
+        criarRastroMovimento: function(x, y, direcao, cor = '#ffffff') {
+            const quantidade = 8;
+            
+            for (let i = 0; i < quantidade; i++) {
+                let velocidadeX = 0;
+                let velocidadeY = 0;
+                
+                // Direção oposta ao movimento
+                switch(direcao) {
+                    case 'up':
+                        velocidadeX = (Math.random() - 0.5) * 0.5;
+                        velocidadeY = 0.5 + Math.random() * 1;
+                        break;
+                    case 'down':
+                        velocidadeX = (Math.random() - 0.5) * 0.5;
+                        velocidadeY = -0.5 - Math.random() * 1;
+                        break;
+                    case 'left':
+                        velocidadeX = 0.5 + Math.random() * 1;
+                        velocidadeY = (Math.random() - 0.5) * 0.5;
+                        break;
+                    case 'right':
+                        velocidadeX = -0.5 - Math.random() * 1;
+                        velocidadeY = (Math.random() - 0.5) * 0.5;
+                        break;
+                }
+                
+                state.particulas.push(new Particula(
+                    x + (Math.random() * 8 - 4),
+                    y + (Math.random() * 8 - 4),
+                    cor,
+                    1 + Math.random() * 2,
+                    { x: velocidadeX, y: velocidadeY },
+                    300 + Math.random() * 200,
+                    0,
+                    'circular'
+                ));
+            }
+        },
+        
+        // Criar chuva de estrelas
+        criarChuvaEstrelas: function(area = { x: 0, y: 0, width: 320, height: 180 }) {
+            for (let i = 0; i < 15; i++) {
+                const x = area.x + Math.random() * area.width;
+                const y = area.y - 20 - Math.random() * 30;
+                
+                state.particulas.push(new Particula(
+                    x, y,
+                    '#ffff88',
+                    1 + Math.random() * 2,
+                    {
+                        x: (Math.random() - 0.5) * 0.5,
+                        y: 2 + Math.random() * 3
+                    },
+                    3000 + Math.random() * 2000,
+                    0.02,
+                    'circular'
+                ));
+            }
         },
         
         // Limpar todos os efeitos

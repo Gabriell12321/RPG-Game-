@@ -7,19 +7,104 @@
   <link rel="stylesheet" href="css/style.css">
   <style>
     .game-title {
-      font-size: 2.5rem;
-      color: #ff4444;
-      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.6);
-      margin-bottom: 20px;
-      animation: pulse 1.5s infinite;
+      font-size: 3.2rem;
+      font-weight: bold;
+      background: linear-gradient(
+        45deg,
+        #ff4444 0%,
+        #ff8844 25%,
+        #ff4488 50%,
+        #8844ff 75%,
+        #ff4444 100%
+      );
+      background-size: 300% 300%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: #ff4444; /* Fallback para navegadores que não suportam background-clip */
+      text-shadow: 
+        0 0 20px rgba(255, 68, 68, 0.8),
+        0 0 40px rgba(255, 68, 68, 0.6),
+        0 0 60px rgba(255, 68, 68, 0.4),
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+      margin-bottom: 25px;
+      letter-spacing: 0.1em;
+      font-family: 'MS Gothic', 'Fixedsys', 'Terminal', 'Courier New', monospace;
+      /* Animações */
+      animation: 
+        titlePulse 2s infinite ease-in-out,
+        gradientShift 4s infinite ease-in-out,
+        textGlow 3s infinite alternate;
+      /* Efeitos */
+      filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.5));
+      position: relative;
+    }
+    
+    .game-title::before {
+      content: 'PESADELO PIXELADO';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleShine 3s infinite;
+      z-index: 1;
     }
 
-    @keyframes pulse {
+    @keyframes titlePulse {
       0%, 100% {
-        transform: scale(1);
+        transform: scale(1) rotateX(0deg);
       }
       50% {
-        transform: scale(1.1);
+        transform: scale(1.05) rotateX(2deg);
+      }
+    }
+    
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+    
+    @keyframes textGlow {
+      0% {
+        text-shadow: 
+          0 0 20px rgba(255, 68, 68, 0.8),
+          0 0 40px rgba(255, 68, 68, 0.6),
+          0 0 60px rgba(255, 68, 68, 0.4),
+          2px 2px 4px rgba(0, 0, 0, 0.8);
+      }
+      100% {
+        text-shadow: 
+          0 0 30px rgba(255, 100, 100, 0.9),
+          0 0 60px rgba(255, 100, 100, 0.7),
+          0 0 90px rgba(255, 100, 100, 0.5),
+          3px 3px 6px rgba(0, 0, 0, 0.9);
+      }
+    }
+    
+    @keyframes titleShine {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
       }
     }
     

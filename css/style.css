@@ -1,131 +1,335 @@
 /* Estilos para o jogo RPG de Terror */
-/* Usando apenas fontes do sistema para compatibilidade total */
+/* Fonte pixelada personalizada usando data URI */
+
+@font-face {
+  font-family: 'PixelFont';
+  src: url('data:font/truetype;charset=utf-8;base64,') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  /* Fallback para fontes do sistema com aparência pixelada */
+}
 
 html, body {
   height: 100%;
   margin: 0;
-  background: #080404;
+  background: #0a0505;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
+  /* Priorizar fontes com aparência pixelada */
+  font-family: 'PixelFont', 'MS Gothic', 'Fixedsys', 'Terminal', 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
   overflow: hidden;
-  color: #bfb0b0;
-  background-image: radial-gradient(circle, #190808 0%, #050202 100%);
+  color: #c5b8b8;
+  /* Background melhorado com múltiplas camadas */
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(60, 0, 20, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(40, 0, 60, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(20, 0, 40, 0.25) 0%, transparent 50%),
+    linear-gradient(135deg, #0a0202 0%, #150608 50%, #080204 100%);
+  /* Animação de partículas no fundo */
+  animation: backgroundShift 30s infinite linear;
 }
 
-/* Canvas principal */
+@keyframes backgroundShift {
+  0% { background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%; }
+  25% { background-position: 25% 25%, 75% 75%, 25% 75%, 0% 0%; }
+  50% { background-position: 50% 50%, 50% 50%, 75% 25%, 0% 0%; }
+  75% { background-position: 75% 25%, 25% 75%, 50% 50%, 0% 0%; }
+  100% { background-position: 100% 0%, 0% 100%, 25% 75%, 0% 0%; }
+}
+
+/* Canvas principal com efeitos aprimorados */
 #screen {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border: 12px solid #100606;
-  border-radius: 2px;
-  box-shadow: 0 0 30px rgba(80,0,0,0.25), inset 0 0 8px rgba(20,0,0,0.6);
+  /* Borda melhorada com gradiente */
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 8px;
+  /* Sombras múltiplas para efeito de profundidade */
+  box-shadow: 
+    0 0 20px rgba(180, 30, 30, 0.4),
+    0 0 40px rgba(100, 0, 50, 0.3),
+    0 0 60px rgba(50, 0, 100, 0.2),
+    inset 0 0 15px rgba(255, 50, 50, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.8);
   background: #000;
   display: block;
   position: relative;
-  animation: glow 2s infinite alternate;
+  /* Animação de brilho aprimorada */
+  animation: screenGlow 3s infinite alternate ease-in-out;
+  /* Efeito de borda gradiente */
+  background: linear-gradient(45deg, #1a0505, #0a0a0a, #051a0a, #05050a) padding-box,
+              linear-gradient(45deg, #ff3030, #ff6030, #ff3060, #6030ff) border-box;
 }
 
-/* Efeito de brilho no canvas */
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 30px rgba(80,0,0,0.25), inset 0 0 8px rgba(20,0,0,0.6); }
-  50% { box-shadow: 0 0 40px rgba(100,0,0,0.3), inset 0 0 10px rgba(30,0,0,0.7); }
-}
-
-@keyframes glow {
-  from {
-    box-shadow: 0 0 30px rgba(80, 0, 0, 0.25), inset 0 0 8px rgba(20, 0, 0, 0.6);
+@keyframes screenGlow {
+  0% {
+    box-shadow: 
+      0 0 20px rgba(180, 30, 30, 0.4),
+      0 0 40px rgba(100, 0, 50, 0.3),
+      0 0 60px rgba(50, 0, 100, 0.2),
+      inset 0 0 15px rgba(255, 50, 50, 0.1),
+      0 8px 32px rgba(0, 0, 0, 0.8);
+    transform: scale(1);
   }
-  to {
-    box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 12px rgba(255, 0, 0, 0.8);
+  50% {
+    box-shadow: 
+      0 0 30px rgba(255, 50, 50, 0.6),
+      0 0 60px rgba(150, 30, 80, 0.5),
+      0 0 90px rgba(80, 20, 150, 0.4),
+      inset 0 0 25px rgba(255, 100, 100, 0.2),
+      0 12px 48px rgba(0, 0, 0, 0.9);
+    transform: scale(1.002);
+  }
+  100% {
+    box-shadow: 
+      0 0 25px rgba(200, 40, 40, 0.5),
+      0 0 50px rgba(120, 20, 70, 0.4),
+      0 0 75px rgba(60, 10, 120, 0.3),
+      inset 0 0 20px rgba(255, 80, 80, 0.15),
+      0 10px 40px rgba(0, 0, 0, 0.85);
+    transform: scale(1.001);
   }
 }
 
-/* Container principal */
+/* Container principal melhorado */
 .container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
   align-items: center;
   width: 100%;
-  max-width: 1100px;
-  padding: 20px;
+  max-width: 1200px;
+  padding: 25px;
   box-sizing: border-box;
   position: relative;
   margin-top: 20px;
-  padding: 30px;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  /* Background aprimorado com múltiplas camadas */
+  background: 
+    linear-gradient(135deg, rgba(20, 5, 5, 0.95) 0%, rgba(5, 5, 20, 0.9) 100%),
+    radial-gradient(circle at 30% 70%, rgba(60, 0, 30, 0.3) 0%, transparent 50%);
+  border-radius: 15px;
+  /* Sombras e bordas aprimoradas */
+  box-shadow: 
+    0 0 30px rgba(100, 20, 20, 0.4),
+    0 0 60px rgba(50, 0, 50, 0.3),
+    inset 0 0 50px rgba(255, 50, 50, 0.05),
+    0 15px 45px rgba(0, 0, 0, 0.7);
+  /* Borda gradiente sutil */
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+  /* Efeito de pulsação sutil */
+  animation: containerPulse 4s infinite ease-in-out;
 }
 
-/* Controles do áudio */
+/* Pseudo-elemento para borda gradiente */
+.container::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(45deg, 
+    rgba(255, 100, 100, 0.3) 0%, 
+    rgba(100, 100, 255, 0.2) 25%, 
+    rgba(255, 100, 255, 0.3) 50%, 
+    rgba(100, 255, 100, 0.2) 75%, 
+    rgba(255, 100, 100, 0.3) 100%);
+  border-radius: 15px;
+  z-index: -1;
+  animation: borderShift 8s infinite linear;
+}
+
+@keyframes containerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.002); }
+}
+
+@keyframes borderShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Controles do áudio aprimorados */
 .audio-controls {
   position: absolute;
-  bottom: -30px;
-  right: 20px;
+  bottom: -40px;
+  right: 25px;
   display: flex;
-  gap: 12px;
-  z-index: 10;
-  opacity: 0.6;
-  transition: opacity 0.2s;
+  gap: 15px;
+  z-index: 15;
+  opacity: 0.75;
+  transition: all 0.3s ease;
+  /* Background melhorado */
+  background: linear-gradient(135deg, 
+    rgba(20, 40, 60, 0.8) 0%, 
+    rgba(40, 20, 60, 0.7) 100%);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(100, 150, 200, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .audio-controls:hover {
   opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
 }
 
 .audio-btn {
-  background: #122630;
-  color: #7ea;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
+  /* Background com gradiente */
+  background: linear-gradient(135deg, 
+    rgba(30, 60, 90, 0.9) 0%, 
+    rgba(50, 40, 80, 0.8) 100%);
+  color: #9dd7e8;
+  border: 1px solid rgba(157, 215, 232, 0.4);
+  border-radius: 8px;
+  padding: 6px 12px;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  /* Sombra e efeitos */
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efeito de brilho ao passar o mouse */
+.audio-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  transition: left 0.5s ease;
 }
 
 .audio-btn:hover {
-  background: #1a3542;
+  background: linear-gradient(135deg, 
+    rgba(50, 90, 130, 0.95) 0%, 
+    rgba(70, 60, 110, 0.9) 100%);
+  color: #ffffff;
+  border-color: rgba(157, 215, 232, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 3px rgba(255, 255, 255, 0.2);
+}
+
+.audio-btn:hover::before {
+  left: 100%;
+}
+
+.audio-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .audio-btn.muted {
-  color: #555;
-  background: #0a1a22;
+  color: #666;
+  background: linear-gradient(135deg, 
+    rgba(40, 40, 40, 0.8) 0%, 
+    rgba(20, 20, 20, 0.9) 100%);
+  border-color: rgba(100, 100, 100, 0.3);
 }
 
-/* Informações e instruções */
+/* Informações e instruções aprimoradas */
 .info-bar {
   position: absolute;
-  bottom: -32px;
-  left: 20px;
-  color: #7ea;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 3px rgba(0,180,120,0.4);
+  bottom: -45px;
+  left: 25px;
+  /* Styling melhorado */
+  background: linear-gradient(135deg, 
+    rgba(0, 60, 40, 0.85) 0%, 
+    rgba(0, 40, 60, 0.8) 100%);
+  color: #7ef4ea;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(126, 244, 234, 0.4);
+  /* Layout e bordas */
+  padding: 8px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(126, 244, 234, 0.3);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  /* Animação sutil */
+  animation: infoGlow 3s infinite ease-in-out;
+  max-width: 400px;
+  word-wrap: break-word;
 }
 
-/* Efeito de scanline */
+@keyframes infoGlow {
+  0%, 100% { 
+    box-shadow: 
+      0 4px 15px rgba(0, 0, 0, 0.5),
+      inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  }
+  50% { 
+    box-shadow: 
+      0 4px 20px rgba(0, 0, 0, 0.6),
+      0 0 15px rgba(126, 244, 234, 0.3),
+      inset 0 1px 3px rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Efeito de scanline aprimorado */
 .scanline {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,0),
-    rgba(0,0,0,0) 1px,
-    rgba(0,0,0,0.2) 1px,
-    rgba(0,0,0,0.2) 2px
-  );
+  /* Scanlines mais detalhadas */
+  background: 
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 1px,
+      rgba(0, 0, 0, 0.15) 1px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.02) 0px,
+      rgba(255, 0, 0, 0.02) 1px,
+      rgba(0, 255, 0, 0.02) 1px,
+      rgba(0, 255, 0, 0.02) 2px,
+      rgba(0, 0, 255, 0.02) 2px,
+      rgba(0, 0, 255, 0.02) 3px
+    );
   pointer-events: none;
   z-index: 5;
-  opacity: 0.1;
+  opacity: 0.08;
+  /* Animação das scanlines */
+  animation: scanlineMove 0.1s infinite linear;
+}
+
+@keyframes scanlineMove {
+  0% { background-position: 0px 0px, 0px 0px; }
+  100% { background-position: 0px 3px, 3px 0px; }
 }
 
 /* Fundo com gradiente */
