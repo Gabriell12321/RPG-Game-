@@ -9,8 +9,154 @@ document.addEventListener('DOMContentLoaded', function() {
     const BASE_W = 320, BASE_H = 180, SCALE = 3;
     const SCREEN_W = BASE_W * SCALE, SCREEN_H = BASE_H * SCALE;
     
-    const MENU_OPTIONS = ["Começar Pesadelo", "Opções", "Segredos", "Desistir"];
-    const GAME_VERSION = "Pesadelo v0.1";
+    const MENU_OPTIONS = ["Novo Jogo", "Continuar", "Opções", "Segredos", "Desistir"];
+    const GAME_VERSION = "Pesadelo v0.2";
+    
+    // Sistema de Save/Load
+    const SAVE_KEY = 'pesadelo_pixelado_save';
+    let temSaveDisponivel = false;
+    
+    // Verificar se existe save ao inicializar
+    function verificarSaveDisponivel() {
+        const saveData = localStorage.getItem(SAVE_KEY);
+        temSaveDisponivel = saveData !== null;
+        console.log("Save disponível:", temSaveDisponivel);
+        return temSaveDisponivel;
+    }
+    
+    // Salvar o jogo
+    function salvarJogo() {
+        const saveData = {
+            versao: GAME_VERSION,
+            timestamp: Date.now(),
+            jogador: {
+                posicao: { ...jogador.posicao },
+                vida: jogador.vida,
+                vidaMaxima: jogador.vidaMaxima,
+                sanidade: jogador.sanidade,
+                sanidadeMaxima: jogador.sanidadeMaxima,
+                velocidade: jogador.velocidade,
+                lanterna: jogador.lanterna,
+                efeitos: { ...jogador.efeitos }
+            },
+            ambiente: ambiente,
+            mundoOffset: { ...mundoOffset },
+            inimigosAtivos: inimigosAtivos.map(inimigo => ({
+                tipo: inimigo.tipo,
+                posicao: { ...inimigo.posicao },
+                vida: inimigo.vida,
+                vidaMaxima: inimigo.vidaMaxima,
+                alerta: inimigo.alerta
+            })),
+            estatisticas: {
+                tempoJogado: tick,
+                inimigosEliminados: 0,
+                mortesJogador: 0
+            }
+        };
+        
+        try {
+            localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+            console.log("Jogo salvo com sucesso!");
+            
+            // Atualizar status de save disponível
+            verificarSaveDisponivel();
+            
+            // Efeito visual de save
+            if (window.EfeitosVisuais) {
+                window.EfeitosVisuais.criarFlash('#00ff00', 500, 0.2);
+                window.EfeitosVisuais.criarExplosao(jogador.posicao.x, jogador.posicao.y, '#00ff00', 15, 4, 1000);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            return false;
+        }
+    }
+    
+    // Carregar o jogo
+    function carregarJogo() {
+        try {
+            const saveData = localStorage.getItem(SAVE_KEY);
+            if (!saveData) {
+                console.log("Nenhum save encontrado");
+                return false;
+            }
+            
+            const dados = JSON.parse(saveData);
+            
+            // Verificar versão (opcional - para compatibilidade futura)
+            if (dados.versao !== GAME_VERSION) {
+                console.warn("Save de versão diferente:", dados.versao);
+                // Aqui poderia ter migração de dados se necessário
+            }
+            
+            // Restaurar estado do jogador
+            jogador.posicao = { ...dados.jogador.posicao };
+            jogador.vida = dados.jogador.vida;
+            jogador.vidaMaxima = dados.jogador.vidaMaxima;
+            jogador.sanidade = dados.jogador.sanidade;
+            jogador.sanidadeMaxima = dados.jogador.sanidadeMaxima;
+            jogador.velocidade = dados.jogador.velocidade;
+            jogador.lanterna = dados.jogador.lanterna || false;
+            jogador.efeitos = { ...dados.jogador.efeitos };
+            
+            // Restaurar ambiente
+            ambiente = dados.ambiente;
+            if (dados.mundoOffset) {
+                mundoOffset = { ...dados.mundoOffset };
+            }
+            
+            // Restaurar inimigos
+            inimigosAtivos = [];
+            if (dados.inimigosAtivos) {
+                dados.inimigosAtivos.forEach(inimigoData => {
+                    const inimigo = criarInimigo(inimigoData.tipo, inimigoData.posicao.x, inimigoData.posicao.y);
+                    if (inimigo) {
+                        inimigo.vida = inimigoData.vida;
+                        inimigo.vidaMaxima = inimigoData.vidaMaxima;
+                        inimigo.alerta = inimigoData.alerta;
+                        inimigosAtivos.push(inimigo);
+                    }
+                });
+            }
+            
+            // Restaurar tick (tempo de jogo)
+            if (dados.estatisticas && dados.estatisticas.tempoJogado) {
+                tick = dados.estatisticas.tempoJogado;
+            }
+            
+            console.log("Jogo carregado com sucesso!");
+            
+            // Efeito visual de load
+            if (window.EfeitosVisuais) {
+                window.EfeitosVisuais.criarFlash('#0080ff', 500, 0.2);
+                window.EfeitosVisuais.criarExplosao(jogador.posicao.x, jogador.posicao.y, '#0080ff', 20, 5, 1200);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("Erro ao carregar:", error);
+            return false;
+        }
+    }
+    
+    // Deletar save
+    function deletarSave() {
+        try {
+            localStorage.removeItem(SAVE_KEY);
+            temSaveDisponivel = false;
+            console.log("Save deletado");
+            return true;
+        } catch (error) {
+            console.error("Erro ao deletar save:", error);
+            return false;
+        }
+    }
+    
+    // Inicializar verificação de save
+    verificarSaveDisponivel();
     
     // Verificar se o canvas existe
     const canvas = document.getElementById('screen');
@@ -775,6 +921,107 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillRect(0, 0, 30, BASE_H);
         ctx.fillRect(0, 0, BASE_W, 30);
         
+        // === BAÚ DE SAVE ===
+        const bauX = BASE_W - 55;
+        const bauY = 50;
+        const bauLargura = 25;
+        const bauAltura = 18;
+        
+        // Sombra do baú
+        const bauShadowGradient = ctx.createEllipse ? 
+            ctx.createRadialGradient(bauX + bauLargura/2, bauY + bauAltura + 2, 5, bauX + bauLargura/2, bauY + bauAltura + 2, 15) :
+            ctx.createRadialGradient(bauX + bauLargura/2, bauY + bauAltura + 2, 5, bauX + bauLargura/2, bauY + bauAltura + 2, 15);
+        bauShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+        bauShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bauShadowGradient;
+        ctx.beginPath();
+        ctx.ellipse(bauX + bauLargura/2, bauY + bauAltura + 2, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Corpo do baú
+        const bauGradient = ctx.createLinearGradient(bauX, bauY, bauX, bauY + bauAltura);
+        bauGradient.addColorStop(0, '#8B4513');  // Marrom escuro
+        bauGradient.addColorStop(0.3, '#A0522D');  // Marrom médio
+        bauGradient.addColorStop(0.7, '#654321');  // Marrom escuro
+        bauGradient.addColorStop(1, '#4A2C17');  // Marrom muito escuro
+        ctx.fillStyle = bauGradient;
+        ctx.fillRect(bauX, bauY + 8, bauLargura, bauAltura - 8);
+        
+        // Tampa do baú
+        const tampaGradient = ctx.createLinearGradient(bauX, bauY, bauX, bauY + 10);
+        tampaGradient.addColorStop(0, '#A0522D');
+        tampaGradient.addColorStop(1, '#8B4513');
+        ctx.fillStyle = tampaGradient;
+        ctx.fillRect(bauX, bauY, bauLargura, 10);
+        
+        // Bordas e detalhes do baú
+        ctx.strokeStyle = '#4A2C17';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bauX, bauY, bauLargura, bauAltura);
+        ctx.strokeRect(bauX, bauY + 8, bauLargura, bauAltura - 8);
+        
+        // Fechadura do baú
+        const fechaduraX = bauX + bauLargura - 6;
+        const fechaduraY = bauY + bauAltura/2;
+        
+        // Base da fechadura
+        ctx.fillStyle = '#FFD700';  // Dourado
+        ctx.beginPath();
+        ctx.arc(fechaduraX, fechaduraY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#DAA520';  // Dourado escuro
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Buraco da chave
+        ctx.fillStyle = '#2F1B14';
+        ctx.beginPath();
+        ctx.arc(fechaduraX, fechaduraY, 1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Ferragens do baú
+        ctx.strokeStyle = '#4A2C17';
+        ctx.lineWidth = 1;
+        // Ferragens horizontais
+        ctx.beginPath();
+        ctx.moveTo(bauX + 2, bauY + 4);
+        ctx.lineTo(bauX + bauLargura - 2, bauY + 4);
+        ctx.moveTo(bauX + 2, bauY + bauAltura - 4);
+        ctx.lineTo(bauX + bauLargura - 2, bauY + bauAltura - 4);
+        ctx.stroke();
+        
+        // Ferragens verticais nos cantos
+        ctx.beginPath();
+        ctx.moveTo(bauX + 2, bauY + 2);
+        ctx.lineTo(bauX + 2, bauY + bauAltura - 2);
+        ctx.moveTo(bauX + bauLargura - 2, bauY + 2);
+        ctx.lineTo(bauX + bauLargura - 2, bauY + bauAltura - 2);
+        ctx.stroke();
+        
+        // Efeito de brilho se o jogador estiver próximo
+        const distanciaBau = Math.sqrt(
+            Math.pow(jogador.posicao.x - (bauX + bauLargura/2), 2) + 
+            Math.pow(jogador.posicao.y - (bauY + bauAltura/2), 2)
+        );
+        
+        if (distanciaBau < 25) {
+            // Brilho dourado ao redor do baú
+            const brilhoPulse = Math.sin(t * 0.1) * 0.3 + 0.7;
+            ctx.strokeStyle = `rgba(255, 215, 0, ${brilhoPulse * 0.8})`;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bauX - 2, bauY - 2, bauLargura + 4, bauAltura + 4);
+            
+            // Partículas douradas (ocasionais)
+            if (window.EfeitosVisuais && Math.random() > 0.92) {
+                window.EfeitosVisuais.criarMagia(
+                    bauX + bauLargura/2 + (Math.random() * 10 - 5), 
+                    bauY + bauAltura/2 + (Math.random() * 10 - 5), 
+                    '#FFD700', 
+                    3
+                );
+            }
+        }
+        
         // Interação - Texto indicando a porta para o quintal
         if(jogador.posicao.y > BASE_H - 45 && 
           Math.abs(jogador.posicao.x - BASE_W/2) < 25) {
@@ -788,6 +1035,20 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillText("Pressione E para sair", BASE_W/2 - 58, BASE_H - 32);
             ctx.fillStyle = '#ffeeaa';
             ctx.fillText("Pressione E para sair", BASE_W/2 - 59, BASE_H - 33);
+        }
+        
+        // Interação com o baú de save
+        if (distanciaBau < 20) {
+            // Fundo do texto
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(bauX - 35, bauY - 15, 95, 12);
+            
+            // Texto com sombra
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText("Pressione S para salvar", bauX - 33, bauY - 7);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText("Pressione S para salvar", bauX - 34, bauY - 8);
         }
     }
     
@@ -2164,6 +2425,38 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillText('MAPA', miniMapX + 1, miniMapY - 2);
         ctx.fillStyle = 'rgba(150, 200, 255, 0.9)';
         ctx.fillText('MAPA', miniMapX, miniMapY - 3);
+        
+        // === DICA DE SALVAMENTO ===
+        // Mostra dica quando está perto do baú na casa
+        if (ambiente === 'casa') {
+            const distanciaX = Math.abs(jogador.posicao.x - 480);
+            const distanciaY = Math.abs(jogador.posicao.y - 320);
+            
+            if (distanciaX < 40 && distanciaY < 40) {
+                const pulsacaoSave = Math.sin(tick * 0.15) * 0.3 + 0.7;
+                
+                // Fundo da dica
+                ctx.fillStyle = 'rgba(20, 10, 30, 0.85)';
+                ctx.fillRect(BASE_W/2 - 60, BASE_H - 40, 120, 25);
+                
+                // Borda da dica
+                ctx.strokeStyle = `rgba(255, 215, 0, ${pulsacaoSave})`;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(BASE_W/2 - 60, BASE_H - 40, 120, 25);
+                
+                // Texto da dica
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('Pressione S para salvar', BASE_W/2 + 1, BASE_H - 22);
+                
+                ctx.fillStyle = `rgba(255, 215, 0, ${pulsacaoSave})`;
+                ctx.fillText('Pressione S para salvar', BASE_W/2, BASE_H - 23);
+                
+                // Restaura alinhamento
+                ctx.textAlign = 'left';
+            }
+        }
     }
     
     // Função principal de renderização
@@ -2211,6 +2504,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Menu
             bctx.font = '16px "Courier New", monospace';
             let startY = 96;
+            const temSave = localStorage.getItem('pesadeloPixeladoSave') !== null;
+            
             MENU_OPTIONS.forEach((opt, i) => {
                 const tremor = i === selected ? Math.random() * 2 - 1 : 0;
                 const txtW = bctx.measureText(opt).width;
@@ -2218,8 +2513,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const y = startY + i * 22;
                 const isSel = (i === selected);
                 
+                // Verifica se a opção "Continuar" está disponível
+                const isDisabled = (opt === "Continuar" && !temSave);
+                
                 // Destaque da seleção
-                if (isSel) {
+                if (isSel && !isDisabled) {
                     const glow = (1 + Math.sin(t * 0.008)) * 0.5;
                     const w = txtW + 12, h = 18;
                     bctx.fillStyle = `rgba(80,20,20,${0.4 + glow * 0.2})`;
@@ -2230,12 +2528,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Texto
-                if (isSel) {
+                if (isDisabled) {
+                    // Opção desabilitada (sem save)
+                    bctx.fillStyle = '#444444';
+                    bctx.fillText(opt, x, y);
+                    
+                    // Adiciona indicação de "sem save"
+                    if (opt === "Continuar") {
+                        bctx.font = '10px "Courier New", monospace';
+                        bctx.fillStyle = '#666666';
+                        const infoText = "(sem save)";
+                        const infoX = x + txtW + 8;
+                        bctx.fillText(infoText, infoX, y);
+                        bctx.font = '16px "Courier New", monospace';
+                    }
+                } else if (isSel) {
                     bctx.fillStyle = '#ffffff';
                     bctx.fillText(opt, x, y);
+                    
+                    // Adiciona indicação de save disponível
+                    if (opt === "Continuar" && temSave) {
+                        bctx.font = '10px "Courier New", monospace';
+                        bctx.fillStyle = '#88ff88';
+                        const infoText = "(save encontrado)";
+                        const infoX = x + txtW + 8;
+                        bctx.fillText(infoText, infoX, y);
+                        bctx.font = '16px "Courier New", monospace';
+                    }
                 } else {
                     bctx.fillStyle = '#a08585';
                     bctx.fillText(opt, x, y);
+                    
+                    // Adiciona indicação sutil de save disponível
+                    if (opt === "Continuar" && temSave) {
+                        bctx.font = '10px "Courier New", monospace';
+                        bctx.fillStyle = '#558855';
+                        const infoText = "(save encontrado)";
+                        const infoX = x + txtW + 8;
+                        bctx.fillText(infoText, infoX, y);
+                        bctx.font = '16px "Courier New", monospace';
+                    }
                 }
             });
         } else {
@@ -2442,15 +2774,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     playSoundEffect('menuSelect');
                     // Processa a seleção do menu
                     switch(selected) {
-                        case 0: // Começar Pesadelo
+                        case 0: // Novo Jogo
                             gameState = 'game';
-                            // Resetar estado do jogador
+                            // Resetar estado do jogador (novo jogo)
                             jogador.vida = jogador.vidaMaxima;
                             jogador.sanidade = jogador.sanidadeMaxima;
                             jogador.posicao.x = BASE_W / 2;
                             jogador.posicao.y = BASE_H / 2;
+                            jogador.lanterna = false;
+                            jogador.efeitos = {
+                                ultimoSuspiro: 0,
+                                piscarOlhos: 0,
+                                passosTomados: 0
+                            };
                             jogoInicializado = false;
-                            ambiente = 'casa'; // Começar na casa
+                            ambiente = 'casa';
+                            mundoOffset = { x: 0, y: 0 };
+                            inimigosAtivos = [];
+                            tick = 0;
                             
                             // Garantir que o áudio seja inicializado antes de tocar música
                             if (!audioInitialized) {
@@ -2462,13 +2803,44 @@ document.addEventListener('DOMContentLoaded', function() {
                                 startBackgroundMusic();
                             }, 100);
                             break;
-                        case 1: // Opções
+                            
+                        case 1: // Continuar
+                            if (temSaveDisponivel) {
+                                if (carregarJogo()) {
+                                    gameState = 'game';
+                                    jogoInicializado = true; // Já carregou, não precisa respawnar inimigos
+                                    
+                                    // Garantir que o áudio seja inicializado
+                                    if (!audioInitialized) {
+                                        initializeAudioOnFirstInteraction();
+                                    }
+                                    
+                                    setTimeout(() => {
+                                        startBackgroundMusic();
+                                    }, 100);
+                                } else {
+                                    // Erro ao carregar - mostrar mensagem
+                                    console.log("Erro ao carregar o save");
+                                    if (window.EfeitosVisuais) {
+                                        window.EfeitosVisuais.criarFlash('#ff0000', 300, 0.3);
+                                    }
+                                }
+                            } else {
+                                // Nenhum save disponível
+                                console.log("Nenhum save encontrado");
+                                if (window.EfeitosVisuais) {
+                                    window.EfeitosVisuais.criarFlash('#ffaa00', 300, 0.2);
+                                }
+                            }
+                            break;
+                            
+                        case 2: // Opções
                             gameState = 'options';
                             break;
-                        case 2: // Segredos
+                        case 3: // Segredos
                             gameState = 'credits';
                             break;
-                        case 3: // Desistir
+                        case 4: // Desistir
                             gameState = 'quit';
                             break;
                     }
@@ -2754,6 +3126,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 tecla2 = false;
                 tecla3 = true;
                 tipoAtaque = 'forte';
+                break;
+                
+            // Tecla S para salvar o jogo quando perto do baú
+            case 's':
+            case 'S':
+                if (gameState === 'game' && ambiente === 'casa' && jogador.vida > 0 && jogador.sanidade > 0) {
+                    // Verifica se está perto do baú (posição do baú: x=480, y=320)
+                    const distanciaX = Math.abs(jogador.posicao.x - 480);
+                    const distanciaY = Math.abs(jogador.posicao.y - 320);
+                    
+                    if (distanciaX < 40 && distanciaY < 40) {
+                        console.log('Salvando jogo...');
+                        salvarJogo();
+                        playSoundEffect('menuSelect');
+                        
+                        // Exibe mensagem de confirmação
+                        if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
+                            window.CutsceneSystem.playWhisper("Jogo salvo com sucesso no baú!");
+                        } else {
+                            playWhisper("Jogo salvo com sucesso no baú!");
+                        }
+                    } else {
+                        // Mensagem quando não está perto do baú
+                        if (window.CutsceneSystem && window.CutsceneSystem.playWhisper) {
+                            window.CutsceneSystem.playWhisper("Você precisa estar perto do baú para salvar.");
+                        } else {
+                            playWhisper("Você precisa estar perto do baú para salvar.");
+                        }
+                    }
+                }
                 break;
                 
             // Tecla E para transição entre ambientes
